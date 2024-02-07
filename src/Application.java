@@ -26,6 +26,8 @@ public class Application {
             organizationManager.loadFromFile(database);
         }
 
+        printIntroductionMessage();
+
         while (!needToStop) {
             processCommand(bufferedReaderWithQueueOfStreams.readLine().strip());
         }
@@ -33,6 +35,7 @@ public class Application {
 
     private void processCommand(String command) throws IOException, OrganizationAlreadyPresentedException {
         if (processCommandWithArguments(command)) {
+            addCommandToHistory(command);
             return;
         }
 
@@ -43,7 +46,7 @@ public class Application {
         } else if (command.equals(Localization.get("command.info"))) {
             printInfo();
         } else if (command.equals(Localization.get("command.clear"))) {
-            organizationManager.clear();
+            clearCollection();
         } else if (command.equals(Localization.get("command.save"))) {
             saveCollection();
         } else if (command.equals(Localization.get("command.read"))) {
@@ -73,7 +76,7 @@ public class Application {
             return;
         }
 
-        commandsHistory.append(getFirstArgument(command));
+        addCommandToHistory(command);
     }
 
     private boolean processCommandWithArguments(String command) throws IOException {
@@ -90,7 +93,6 @@ public class Application {
             return false;
         }
 
-        commandsHistory.append(getFirstArgument(command));
         return true;
     }
 
@@ -112,7 +114,7 @@ public class Application {
     }
 
     private void addCommandToHistory(String command) {
-        commandsHistory.append(command);
+        commandsHistory.append(getFirstArgument(command));
     }
 
     private void printHistory() {
