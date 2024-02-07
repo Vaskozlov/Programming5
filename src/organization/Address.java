@@ -2,7 +2,7 @@ package organization;
 
 import lib.*;
 
-public record Address(String zipCode, Location town) implements PrettyPrintable, ConvertableToStream {
+public record Address(String zipCode, Location town) implements PrettyPrintable, WritableToStream {
     /**
      * @param zipCode nullable, must contain at least 3 characters
      * @param town    can not be null
@@ -36,14 +36,14 @@ public record Address(String zipCode, Location town) implements PrettyPrintable,
         }
 
         return new Address(
-                ConvertableFromStream.convertNullableFromStream(stream, Stream::read),
+                ConvertToStreamHelper.convertNullableFromStream(stream, Stream::read),
                 Location.fromStream(stream)
         );
     }
 
     @Override
-    public void convertToStream(StringStream stream) {
-        ConvertableToStream.convertNullableToStream(stream, zipCode, stream::write);
-        town.convertToStream(stream);
+    public void writeToStream(StringStream stream) {
+        WritableToStream.writeNullableToStream(stream, zipCode, stream::write);
+        town.writeToStream(stream);
     }
 }

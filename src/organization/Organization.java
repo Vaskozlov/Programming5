@@ -15,7 +15,7 @@ public record Organization(
         Integer employeesCount,
         OrganizationType type,
         Address postalAddress
-) implements PrettyPrintable, ConvertableToStream, Comparable<Organization> {
+) implements PrettyPrintable, WritableToStream, Comparable<Organization> {
 
     /**
      * @param name           can not be null or empty
@@ -98,12 +98,12 @@ public record Organization(
                 LocalDate.parse(stream.read()),
                 Float.parseFloat(stream.read()),
                 stream.read(),
-                ConvertableFromStream.convertNullableFromStream(
+                ConvertToStreamHelper.convertNullableFromStream(
                         stream,
                         (StringStream dataStream) ->
                                 Integer.parseInt(dataStream.read())
                 ),
-                ConvertableFromStream.convertNullableFromStream(
+                ConvertToStreamHelper.convertNullableFromStream(
                         stream,
                         (StringStream dataStream) ->
                                 OrganizationType.valueOf(dataStream.read())
@@ -113,19 +113,19 @@ public record Organization(
     }
 
     @Override
-    public void convertToStream(StringStream stream) {
+    public void writeToStream(StringStream stream) {
         stream.writeAny(id);
         stream.write(name);
-        coordinates.convertToStream(stream);
+        coordinates.writeToStream(stream);
         stream.write(creationDate.toString());
         stream.writeAny(annualTurnover);
         stream.write(fullName);
 
-        ConvertableToStream.convertNullableToStream(stream, employeesCount, stream::writeAny);
-        ConvertableToStream.convertNullableToStream(stream, type, stream::writeAny);
+        WritableToStream.writeNullableToStream(stream, employeesCount, stream::writeAny);
+        WritableToStream.writeNullableToStream(stream, type, stream::writeAny);
 
-        ConvertableToStream.convertNullableToStream(stream, postalAddress, (Address address) ->
-                address.convertToStream(stream)
+        WritableToStream.writeNullableToStream(stream, postalAddress, (Address address) ->
+                address.writeToStream(stream)
         );
     }
 }

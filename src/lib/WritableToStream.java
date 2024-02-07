@@ -1,12 +1,12 @@
 package lib;
 
-public interface ConvertableToStream {
+public interface WritableToStream {
     /**
      * If object is null writes null to stream, otherwise calls the function
      *
      * @param function, which will be called in case object is not null
      */
-    static <T> void convertNullableToStream(StringStream stream, T object, FunctionWithVoidReturnAndOneArgument<T> function) {
+    static <T> void writeNullableToStream(StringStream stream, T object, FunctionWithVoidReturnAndOneArgument<T> function) {
         if (object == null) {
             stream.write("null");
         } else {
@@ -14,5 +14,5 @@ public interface ConvertableToStream {
         }
     }
 
-    void convertToStream(StringStream stream);
+    void writeToStream(StringStream stream);
 }

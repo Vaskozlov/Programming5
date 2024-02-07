@@ -172,7 +172,7 @@ public class OrganizationManager {
             file.write(CSVHeader);
             for (Organization organization : organizations) {
                 StringStream stream = new StringStream();
-                organization.convertToStream(stream);
+                organization.writeToStream(stream);
                 file.write(String.join(";", stream));
                 file.append('\n');
             }

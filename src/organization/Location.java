@@ -6,7 +6,7 @@ public record Location(
         double x,
         float y,
         Long z,
-        String name) implements PrettyPrintable, ConvertableToStream {
+        String name) implements PrettyPrintable, WritableToStream {
 
     /**
      * @param z    can not be null
@@ -42,15 +42,15 @@ public record Location(
                 Double.parseDouble(stream.read()),
                 Float.parseFloat(stream.read()),
                 Long.parseLong(stream.read()),
-                ConvertableFromStream.convertNullableFromStream(stream, Stream::read)
+                ConvertToStreamHelper.convertNullableFromStream(stream, Stream::read)
         );
     }
 
     @Override
-    public void convertToStream(StringStream stream) {
+    public void writeToStream(StringStream stream) {
         stream.writeAny(x);
         stream.writeAny(y);
         stream.writeAny(z);
-        ConvertableToStream.convertNullableToStream(stream, name, stream::write);
+        WritableToStream.writeNullableToStream(stream, name, stream::write);
     }
 }

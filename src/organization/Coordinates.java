@@ -2,7 +2,7 @@ package organization;
 
 import lib.*;
 
-public record Coordinates(long x, long y) implements PrettyPrintable, ConvertableToStream {
+public record Coordinates(long x, long y) implements PrettyPrintable, WritableToStream {
 
     public Coordinates {
         if (y > 464) {
@@ -27,7 +27,7 @@ public record Coordinates(long x, long y) implements PrettyPrintable, Convertabl
     }
 
     @Override
-    public void convertToStream(StringStream stream) {
+    public void writeToStream(StringStream stream) {
         stream.writeAny(x);
         stream.writeAny(y);
     }
