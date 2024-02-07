@@ -41,7 +41,8 @@ public class BufferedReaderWithQueueOfStreams {
     }
 
     public void popStream() throws IOException {
-        readers.removeLast();
+        BufferedReader removedReader = readers.removeLast();
+        removedReader.close();
 
         if (readers.isEmpty()) {
             throw new IOException("No available streams left.");
