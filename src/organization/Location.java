@@ -2,16 +2,16 @@ package organization;
 
 import lib.*;
 
+/**
+ * @param z    can not be null
+ * @param name nullable, length can not be greater than 933
+ */
 public record Location(
         double x,
         float y,
         Long z,
         String name) implements PrettyPrintable, WritableToStream {
 
-    /**
-     * @param z    can not be null
-     * @param name nullable, length can not be greater than 933
-     */
     public Location {
         if (z == null) {
             throw new IllegalArgumentException("organization.Location() z must not be null");
