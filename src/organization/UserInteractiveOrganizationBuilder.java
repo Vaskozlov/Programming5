@@ -178,13 +178,13 @@ public class UserInteractiveOrganizationBuilder {
             return getString(fieldName, nullable, functionInCaseOfDefaultValue);
         }
 
-        if (line.isEmpty() && defaultValues != null && functionInCaseOfDefaultValue != null) {
+        if (needToTakeDataFromProvidedOrganization(line, defaultValues, functionInCaseOfDefaultValue)) {
             return functionInCaseOfDefaultValue.invoke(defaultValues);
         }
 
         checkForExitCommand(line);
 
-        if (nullable && (line.isEmpty() || line.equals("null"))) {
+        if (isNullInput(nullable, line)) {
             return null;
         }
 
@@ -199,13 +199,13 @@ public class UserInteractiveOrganizationBuilder {
     ) throws KeyboardInterruptException, IOException {
         String line = getInput(fieldName, nullable);
 
-        if (line.isEmpty() && defaultValues != null && functionInCaseOfDefaultValue != null) {
+        if (needToTakeDataFromProvidedOrganization(line, defaultValues, functionInCaseOfDefaultValue)) {
             return functionInCaseOfDefaultValue.invoke(defaultValues);
         }
 
         checkForExitCommand(line);
 
-        if (nullable && (line.isEmpty() || line.equals("null"))) {
+        if (isNullInput(nullable, line)) {
             return null;
         }
 
@@ -215,6 +215,14 @@ public class UserInteractiveOrganizationBuilder {
             System.out.println("Invalid input, try again");
             return getNumber(fieldName, nullable, function, functionInCaseOfDefaultValue);
         }
+    }
+
+    private static boolean isNullInput(boolean nullable, String input) {
+        return nullable && (input.isEmpty() || input.equals(Localization.get("input.null")));
+    }
+
+    private static <F> boolean needToTakeDataFromProvidedOrganization(String line, Organization defaultValues, F function) {
+        return line.isEmpty() && defaultValues != null && function != null;
     }
 
     private String getInput(String fieldName,
