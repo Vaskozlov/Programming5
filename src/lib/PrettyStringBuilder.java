@@ -10,8 +10,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PrettyStringBuilder {
     private final StringBuffer stringBuilder = new StringBuffer();
     private final AtomicInteger ident = new AtomicInteger(0);
-    private final AtomicInteger identSize = new AtomicInteger(4);
+    private final AtomicInteger identSize;
     private boolean initialized = false;
+
+    public PrettyStringBuilder() {
+        this(4);
+    }
+
+    public PrettyStringBuilder(int identSize) {
+        this.identSize = new AtomicInteger(identSize);
+    }
 
     @Override
     public String toString() {
