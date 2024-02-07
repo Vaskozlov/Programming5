@@ -1,5 +1,7 @@
 package lib;
 
+import exceptions.NoBundleLoadedException;
+
 import java.util.Locale;
 import java.util.ResourceBundle;
 
@@ -11,7 +13,7 @@ public class Localization {
 
     public static String get(String key) {
         if (bundle == null) {
-            throw new Error("No bundle loaded");
+            throw new NoBundleLoadedException("No bundle loaded");
         }
 
         return bundle.getString(key);
