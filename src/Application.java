@@ -18,7 +18,7 @@ public class Application {
     private final CircledStorage<String> commandsHistory = new CircledStorage<>(11);
 
     public Application() {
-        Localization.loadBundle("locale", "en");
+        Localization.loadBundle("locale/locale", "en");
     }
 
     public void start(String database) throws IOException, OrganizationAlreadyPresentedException {
@@ -26,10 +26,29 @@ public class Application {
             organizationManager.loadFromFile(database);
         }
 
+        chooseLanguage();
         printIntroductionMessage();
 
         while (!needToStop) {
             processCommand(bufferedReaderWithQueueOfStreams.readLine().strip());
+        }
+    }
+
+    private void chooseLanguage() throws IOException {
+        System.out.println("""
+                Choose language:
+                0 en (default)
+                1 ru""");
+
+        String line = bufferedReaderWithQueueOfStreams.readLine();
+
+        switch (line) {
+            case "", "0", "en" -> Localization.loadBundle("locale/locale", "en");
+            case "1", "ru" -> Localization.loadBundle("locale/locale", "ru");
+            default -> {
+                System.out.println("Invalid input. Try again.");
+                chooseLanguage();
+            }
         }
     }
 
