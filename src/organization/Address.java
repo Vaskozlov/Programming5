@@ -2,11 +2,11 @@ package organization;
 
 import lib.*;
 
+/**
+ * @param zipCode nullable, must contain at least 3 character
+ * @param town    can not be null
+ */
 public record Address(String zipCode, Location town) implements PrettyPrintable, WritableToStream {
-    /**
-     * @param zipCode nullable, must contain at least 3 characters
-     * @param town    can not be null
-     */
     public Address {
         if (zipCode != null && zipCode.length() < 3) {
             throw new IllegalArgumentException("Invalid zip code");
