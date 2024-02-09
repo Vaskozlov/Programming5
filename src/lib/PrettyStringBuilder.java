@@ -43,9 +43,9 @@ public class PrettyStringBuilder {
         stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(line);
     }
 
-    public void appendLine(String line, Object... objects) {
+    public void appendLine(String format, Object... objects) {
         addNewLine();
-        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(String.format(line, objects));
+        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(String.format(format, objects));
     }
 
     private void addNewLine() {
