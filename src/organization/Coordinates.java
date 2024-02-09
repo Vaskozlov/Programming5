@@ -2,7 +2,7 @@ package organization;
 
 import lib.*;
 
-public record Coordinates(long x, long y) implements PrettyPrintable, WritableToStream {
+public record Coordinates(long x, long y) implements YamlConvertable, WritableToStream {
 
     public Coordinates {
         if (y > 464) {
@@ -11,7 +11,7 @@ public record Coordinates(long x, long y) implements PrettyPrintable, WritableTo
     }
 
     @Override
-    public PrettyStringBuilder buildPrettyString(PrettyStringBuilder build) {
+    public PrettyStringBuilder constructYaml(PrettyStringBuilder build) {
         build.appendLine("Coordinates:");
         build.increaseIdent();
 

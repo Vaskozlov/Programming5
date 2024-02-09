@@ -1,5 +1,8 @@
 package organization;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lib.*;
 import exceptions.*;
 
@@ -169,28 +172,49 @@ public class OrganizationManager {
 
     public boolean saveToFile(String filename) {
         try (FileWriter file = new FileWriter(filename)) {
-            file.write(CSVHeader);
-            for (Organization organization : organizations) {
-                StringStream stream = new StringStream();
-                organization.writeToStream(stream);
-                file.write(String.join(";", stream));
-                file.append('\n');
-            }
-
+            file.write(toCSV());
             return true;
         } catch (IOException exception) {
             return false;
         }
     }
 
-    public String toPrettyString() {
-        StringBuilder result = new StringBuilder();
+    public String toCSV() {
+        StringBuilder builder = new StringBuilder(CSVHeader);
 
         for (Organization organization : organizations) {
-            result.append(organization.toPrettyString()).append("\n");
+            StringStream stream = new StringStream();
+            organization.writeToStream(stream);
+            builder.append(String.join(";", stream));
+            builder.append('\n');
+        }
+
+        return builder.toString();
+    }
+
+    public String toYaml() {
+        PrettyStringBuilder result = new PrettyStringBuilder(2);
+        result.appendLine("Organizations:");
+        result.increaseIdent();
+
+        for (Organization organization : organizations) {
+            organization.constructYaml(result);
         }
 
         return result.toString();
+    }
+
+    public String toJson() {
+        try {
+            String yaml = toYaml();
+            ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+            Object obj = yamlReader.readValue(yaml, Object.class);
+            ObjectMapper jsonWriter = new ObjectMapper();
+
+            return jsonWriter.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
+        } catch (JsonProcessingException error) {
+            return "Unable to generate json file, because yaml version has mistakes";
+        }
     }
 
     private void completeModification(Organization organization, BufferedReaderWithQueueOfStreams reader)

@@ -6,7 +6,7 @@ import lib.*;
  * @param zipCode nullable, must contain at least 3 character
  * @param town    can not be null
  */
-public record Address(String zipCode, Location town) implements PrettyPrintable, WritableToStream {
+public record Address(String zipCode, Location town) implements YamlConvertable, WritableToStream {
     public Address {
         if (zipCode != null && zipCode.length() < 3) {
             throw new IllegalArgumentException("Invalid zip code");
@@ -18,7 +18,7 @@ public record Address(String zipCode, Location town) implements PrettyPrintable,
     }
 
     @Override
-    public PrettyStringBuilder buildPrettyString(PrettyStringBuilder builder) {
+    public PrettyStringBuilder constructYaml(PrettyStringBuilder builder) {
         builder.appendLine("organization.Address:");
         builder.increaseIdent();
 

@@ -71,7 +71,7 @@ public class Application {
         } else if (command.equals(Localization.get("command.read"))) {
             readCollection();
         } else if (command.equals(Localization.get("command.show"))) {
-            System.out.println(organizationManager.toPrettyString());
+            System.out.println(organizationManager.toYaml());
         } else if (command.equals(Localization.get("command.add"))) {
             addOrganization();
         } else if (command.equals(Localization.get("command.add_if_max"))) {
@@ -101,6 +101,7 @@ public class Application {
     private boolean processCommandWithArguments(String command) throws IOException {
         String updateCommandRegex = String.format("%s \\d+", Localization.get("command.update"));
         String removeByIdCommandRegex = String.format("%s \\d+", Localization.get("command.remove_by_id"));
+        String showCommandRegex = String.format("%s \\w+", Localization.get("command.show"));
 
         if (command.matches(updateCommandRegex)) {
             int id = Integer.parseInt(getLastArgument(command));
@@ -108,6 +109,16 @@ public class Application {
         } else if (command.matches(removeByIdCommandRegex)) {
             int id = Integer.parseInt(getLastArgument(command));
             removeOrganization(id);
+        } else if (command.matches(showCommandRegex)) {
+            String mode = getLastArgument(command.toLowerCase());
+
+            switch (mode) {
+                case "json" -> System.out.println(organizationManager.toJson());
+                case "csv" -> System.out.println(organizationManager.toCSV());
+                case "yaml" -> System.out.println(organizationManager.toYaml());
+                default ->
+                        System.out.printf("%s: yaml, json, csv.%n", Localization.get("message.show.unrecognizable_format"));
+            }
         } else {
             return false;
         }
@@ -145,7 +156,7 @@ public class Application {
                 Comparator.comparing(Organization::fullName));
 
         if (maxOrganization != null) {
-            System.out.println(maxOrganization.toPrettyString());
+            System.out.println(maxOrganization.toYaml());
         }
     }
 
@@ -233,7 +244,7 @@ public class Application {
         Organization removedOrganization = organizationManager.removeHead();
 
         if (removedOrganization != null) {
-            System.out.println(removedOrganization.toPrettyString());
+            System.out.println(removedOrganization.toYaml());
         }
     }
 

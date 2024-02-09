@@ -15,7 +15,7 @@ public record Organization(
         Integer employeesCount,
         OrganizationType type,
         Address postalAddress
-) implements PrettyPrintable, WritableToStream, Comparable<Organization> {
+) implements YamlConvertable, WritableToStream, Comparable<Organization> {
 
     /**
      * @param name           can not be null or empty
@@ -66,11 +66,10 @@ public record Organization(
     }
 
     @Override
-    public PrettyStringBuilder buildPrettyString(PrettyStringBuilder builder) {
-        builder.appendLine("Organization:");
+    public PrettyStringBuilder constructYaml(PrettyStringBuilder builder) {
+        builder.appendLine("- id: %d", id);
         builder.increaseIdent();
 
-        builder.appendLine("id: %d", id);
         builder.appendLine("name: %s", name);
         builder.appendPrettyObject(coordinates);
         builder.appendLine("creationDate: %s", creationDate.toString());

@@ -14,7 +14,7 @@ public class PrettyStringBuilder {
     private boolean initialized = false;
 
     public PrettyStringBuilder() {
-        this(4);
+        this(2);
     }
 
     public PrettyStringBuilder(int identSize) {
@@ -42,8 +42,8 @@ public class PrettyStringBuilder {
         identSize.set(newIdentSize);
     }
 
-    public void appendPrettyObject(PrettyPrintable prettyPrintable) {
-        prettyPrintable.buildPrettyString(this);
+    public void appendPrettyObject(YamlConvertable yamlConvertable) {
+        yamlConvertable.constructYaml(this);
     }
 
     public void appendLine(String line) {

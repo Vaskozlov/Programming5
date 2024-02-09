@@ -10,7 +10,7 @@ public record Location(
         double x,
         float y,
         Long z,
-        String name) implements PrettyPrintable, WritableToStream {
+        String name) implements YamlConvertable, WritableToStream {
 
     public Location {
         if (z == null) {
@@ -23,12 +23,12 @@ public record Location(
     }
 
     @Override
-    public PrettyStringBuilder buildPrettyString(PrettyStringBuilder builder) {
+    public PrettyStringBuilder constructYaml(PrettyStringBuilder builder) {
         builder.appendLine("organization.Location:");
         builder.increaseIdent();
 
         builder.appendLine("x: %f", x);
-        builder.appendLine("x: %f", y);
+        builder.appendLine("y: %f", y);
         builder.appendLine("z: %d", z);
         builder.appendLine("name: %s", name);
 
