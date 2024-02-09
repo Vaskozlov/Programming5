@@ -13,7 +13,6 @@ public class Stream<T> implements Iterable<T> {
     private ArrayDeque<T> storage = new ArrayDeque<>();
 
     public Stream() {
-
     }
 
     public Stream(List<T> initialData) {

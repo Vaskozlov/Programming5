@@ -23,7 +23,7 @@ public record Address(String zipCode, Location town) implements YamlConvertable,
         builder.increaseIdent();
 
         builder.appendLine("zipCode: %s", zipCode);
-        builder.appendPrettyObject(town);
+        town.constructYaml(builder);
 
         builder.decreaseIdent();
 

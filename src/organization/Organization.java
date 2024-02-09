@@ -71,7 +71,7 @@ public record Organization(
         builder.increaseIdent();
 
         builder.appendLine("name: %s", name);
-        builder.appendPrettyObject(coordinates);
+        coordinates.constructYaml(builder);
         builder.appendLine("creationDate: %s", creationDate.toString());
         builder.appendLine("annualTurnover: %s", annualTurnover);
         builder.appendLine("fullName: %s", fullName);
@@ -81,7 +81,7 @@ public record Organization(
         if (postalAddress == null) {
             builder.appendLine("postalAddress: null");
         } else {
-            builder.appendPrettyObject(postalAddress);
+            postalAddress.constructYaml(builder);
         }
 
         builder.decreaseIdent();

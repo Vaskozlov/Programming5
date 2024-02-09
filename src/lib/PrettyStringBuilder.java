@@ -38,14 +38,6 @@ public class PrettyStringBuilder {
         }
     }
 
-    public void changeIdentSize(int newIdentSize) {
-        identSize.set(newIdentSize);
-    }
-
-    public void appendPrettyObject(YamlConvertable yamlConvertable) {
-        yamlConvertable.constructYaml(this);
-    }
-
     public void appendLine(String line) {
         addNewLine();
         stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(line);
