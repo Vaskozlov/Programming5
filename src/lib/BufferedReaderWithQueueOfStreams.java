@@ -5,7 +5,8 @@ import java.util.ArrayDeque;
 
 /**
  * BufferedReader with an ability to push new stream which will be used instead of a previous one,
- * when stream returns null reader will come back to the previous stream
+ * when stream returns null reader will come back to the previous stream. If BufferReader runs out of streams
+ * readLine/popStream will throw IOException.
  */
 public class BufferedReaderWithQueueOfStreams {
     private final ArrayDeque<BufferedReader> readers = new ArrayDeque<>();
@@ -19,6 +20,9 @@ public class BufferedReaderWithQueueOfStreams {
         pushStream(in);
     }
 
+    /**
+     * Reads line from last stream, throws IOException when there are not any streams left.
+     */
     public String readLine() throws IOException {
         String result = currentReader.readLine();
 
@@ -40,6 +44,9 @@ public class BufferedReaderWithQueueOfStreams {
         currentReader = readers.getLast();
     }
 
+    /**
+     * Removes last stream, if there are no streams left after popping IOException will be thrown.
+     */
     public void popStream() throws IOException {
         BufferedReader removedReader = readers.removeLast();
         removedReader.close();
