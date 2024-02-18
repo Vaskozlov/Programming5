@@ -191,7 +191,6 @@ public class UserInteractiveOrganizationBuilder {
         return line;
     }
 
-
     private <T> T getNumber(String fieldName,
                             boolean nullable,
                             FunctionWithArgumentAndReturnType<T, String> function,
@@ -212,7 +211,7 @@ public class UserInteractiveOrganizationBuilder {
         try {
             return function.invoke(line);
         } catch (Exception exception) {
-            System.out.println("Invalid input, try again");
+            System.out.println(Localization.get("organization_builder.input.type.invalid_input"));
             return getNumber(fieldName, nullable, function, functionInCaseOfDefaultValue);
         }
     }
@@ -227,7 +226,11 @@ public class UserInteractiveOrganizationBuilder {
 
     private String getInput(String fieldName,
                             boolean nullable) throws IOException {
-        System.out.printf(Localization.get("organization_builder.input.get"), fieldName, nullable ? " (nullable)" : "");
+        System.out.printf(
+                Localization.get("organization_builder.input.get"),
+                fieldName,
+                nullable ? Localization.get("input.nullable") : ""
+        );
         return reader.readLine();
     }
 

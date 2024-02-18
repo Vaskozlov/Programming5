@@ -18,7 +18,7 @@ public class Application {
     private final CircledStorage<String> commandsHistory = new CircledStorage<>(11);
 
     public Application() {
-        Localization.loadBundle("locale/locale", "en");
+        Localization.loadBundle("localization/localization", "en");
     }
 
     public void start(String database) throws IOException, OrganizationAlreadyPresentedException {
@@ -43,8 +43,8 @@ public class Application {
         String line = bufferedReaderWithQueueOfStreams.readLine();
 
         switch (line) {
-            case "", "0", "en" -> Localization.loadBundle("locale/locale", "en");
-            case "1", "ru" -> Localization.loadBundle("locale/locale", "ru");
+            case "", "0", "en" -> Localization.loadBundle("localization/localization", "en");
+            case "1", "ru" -> Localization.loadBundle("localization/localization", "ru");
             default -> {
                 System.out.println("Invalid input. Try again.");
                 chooseLanguage();
