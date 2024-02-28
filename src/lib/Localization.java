@@ -11,6 +11,11 @@ import java.util.ResourceBundle;
 public class Localization {
     private static ResourceBundle bundle;
 
+    /**
+     *
+     * @param key for string
+     * @return gets string from bundle using key
+     */
     public static String get(String key) {
         if (bundle == null) {
             throw new NoBundleLoadedException("No bundle loaded");

@@ -13,22 +13,17 @@ import java.util.Objects;
  */
 public class UserInteractiveOrganizationBuilder {
     private final BufferedReaderWithQueueOfStreams reader;
-    private Organization defaultValues = null;
+    private final boolean allowBlank;
 
-    public UserInteractiveOrganizationBuilder(BufferedReaderWithQueueOfStreams reader) {
+    public UserInteractiveOrganizationBuilder(BufferedReaderWithQueueOfStreams reader, boolean allowBlank) {
         this.reader = reader;
-    }
-
-    public UserInteractiveOrganizationBuilder(BufferedReaderWithQueueOfStreams reader, Organization defaultValues) {
-        this.reader = reader;
-        this.defaultValues = defaultValues;
+        this.allowBlank = allowBlank;
     }
 
     public String getName() throws KeyboardInterruptException, IOException {
         return getString(
                 Localization.get("organization_builder.input.organization_name"),
-                false,
-                Organization::name
+                false
         );
     }
 
@@ -36,15 +31,13 @@ public class UserInteractiveOrganizationBuilder {
         Long x = getNumber(
                 Localization.get("organization_builder.input.coordinate.x"),
                 false,
-                Long::parseLong,
-                (Organization organization) -> organization.coordinates().x()
+                Long::parseLong
         );
 
         Long y = getNumber(
                 Localization.get("organization_builder.input.coordinate.y"),
                 false,
-                Long::parseLong,
-                (Organization organization) -> organization.coordinates().y()
+                Long::parseLong
         );
 
         if (y > 464) {
@@ -59,8 +52,7 @@ public class UserInteractiveOrganizationBuilder {
         Float annualTurnover = getNumber(
                 Localization.get("organization_builder.input.annual_turnover"),
                 false,
-                Float::parseFloat,
-                Organization::annualTurnover
+                Float::parseFloat
         );
 
         if (annualTurnover <= 0) {
@@ -74,8 +66,7 @@ public class UserInteractiveOrganizationBuilder {
     public String getFullName() throws KeyboardInterruptException, IOException {
         return getString(
                 Localization.get("organization_builder.input.full_name"),
-                false,
-                Organization::fullName
+                false
         );
     }
 
@@ -83,8 +74,7 @@ public class UserInteractiveOrganizationBuilder {
         return getNumber(
                 Localization.get("organization_builder.input.employees_count"),
                 true,
-                Integer::parseInt,
-                Organization::employeesCount
+                Integer::parseInt
         );
     }
 
@@ -92,8 +82,8 @@ public class UserInteractiveOrganizationBuilder {
         System.out.printf(Localization.get("organization_builder.input.type"));
         String line = reader.readLine();
 
-        if (line.isEmpty() && defaultValues != null) {
-            return defaultValues.type();
+        if (line.isEmpty()) {
+            return null;
         }
 
         checkForExitCommand(line);
@@ -114,21 +104,13 @@ public class UserInteractiveOrganizationBuilder {
     public Address getAddress() throws KeyboardInterruptException, IOException, IllegalArgumentException {
         String zipCode = getString(
                 Localization.get("organization_builder.input.zip_code"),
-                true,
-                (Organization organization) -> {
-                    if (organization.postalAddress() == null) {
-                        return null;
-                    }
-
-                    return organization.postalAddress().zipCode();
-                }
+                true
         );
 
         if (zipCode == null) {
             String answer = getString(
                     Localization.get("organization_builder.input.address.possible_null"),
-                    true,
-                    null
+                    true
             );
 
             if (answer == null) {
@@ -139,28 +121,24 @@ public class UserInteractiveOrganizationBuilder {
         Double x = getNumber(
                 Localization.get("organization_builder.input.location.x"),
                 false,
-                Double::parseDouble,
-                (Organization organization) -> organization.postalAddress().town().x()
+                Double::parseDouble
         );
 
         Float y = getNumber(
                 Localization.get("organization_builder.input.location.y"),
                 false,
-                Float::parseFloat,
-                (Organization organization) -> organization.postalAddress().town().y()
+                Float::parseFloat
         );
 
         Long z = getNumber(
                 Localization.get("organization_builder.input.location.z"),
                 false,
-                Long::parseLong,
-                (Organization organization) -> organization.postalAddress().town().z()
+                Long::parseLong
         );
 
         String name = getString(
                 Localization.get("organization_builder.input.location.name"),
-                true,
-                (Organization organization) -> organization.postalAddress().town().name()
+                true
         );
 
         return new Address(zipCode, new Location(x, y, z, name));
@@ -168,18 +146,17 @@ public class UserInteractiveOrganizationBuilder {
 
     private String getString(
             String fieldName,
-            boolean nullable,
-            FunctionWithArgumentAndReturnType<String, Organization> functionInCaseOfDefaultValue
+            boolean nullable
     ) throws KeyboardInterruptException, IOException {
         String line = getInput(fieldName, nullable);
 
         if (line.contains(";")) {
             System.out.println(Localization.get("message.input.error.semicolon"));
-            return getString(fieldName, nullable, functionInCaseOfDefaultValue);
+            return getString(fieldName, nullable);
         }
 
-        if (needToTakeDataFromProvidedOrganization(line, defaultValues, functionInCaseOfDefaultValue)) {
-            return functionInCaseOfDefaultValue.invoke(defaultValues);
+        if (needToTakeDataFromProvidedOrganization(line) && allowBlank) {
+            return null;
         }
 
         checkForExitCommand(line);
@@ -193,13 +170,12 @@ public class UserInteractiveOrganizationBuilder {
 
     private <T> T getNumber(String fieldName,
                             boolean nullable,
-                            FunctionWithArgumentAndReturnType<T, String> function,
-                            FunctionWithArgumentAndReturnType<T, Organization> functionInCaseOfDefaultValue
+                            FunctionWithArgumentAndReturnType<T, String> function
     ) throws KeyboardInterruptException, IOException {
         String line = getInput(fieldName, nullable);
 
-        if (needToTakeDataFromProvidedOrganization(line, defaultValues, functionInCaseOfDefaultValue)) {
-            return functionInCaseOfDefaultValue.invoke(defaultValues);
+        if (needToTakeDataFromProvidedOrganization(line) && allowBlank) {
+            return null;
         }
 
         checkForExitCommand(line);
@@ -212,7 +188,7 @@ public class UserInteractiveOrganizationBuilder {
             return function.invoke(line);
         } catch (Exception exception) {
             System.out.println(Localization.get("organization_builder.input.type.invalid_input"));
-            return getNumber(fieldName, nullable, function, functionInCaseOfDefaultValue);
+            return getNumber(fieldName, nullable, function);
         }
     }
 
@@ -220,8 +196,8 @@ public class UserInteractiveOrganizationBuilder {
         return nullable && (input.isEmpty() || input.equals(Localization.get("input.null")));
     }
 
-    private static <F> boolean needToTakeDataFromProvidedOrganization(String line, Organization defaultValues, F function) {
-        return line.isEmpty() && defaultValues != null && function != null;
+    private static boolean needToTakeDataFromProvidedOrganization(String line) {
+        return line.isEmpty();
     }
 
     private String getInput(String fieldName,

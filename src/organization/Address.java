@@ -2,11 +2,13 @@ package organization;
 
 import lib.*;
 
+import java.io.IOException;
+
 /**
  * @param zipCode nullable, must contain at least 3 character
  * @param town    can not be null
  */
-public record Address(String zipCode, Location town) implements YamlConvertable, WritableToStream {
+public record Address(String zipCode, Location town) implements YamlConvertable, WritableToCSVStream {
     public Address {
         if (zipCode != null && zipCode.length() < 3) {
             throw new IllegalArgumentException("Invalid zip code");
@@ -30,20 +32,21 @@ public record Address(String zipCode, Location town) implements YamlConvertable,
         return builder;
     }
 
-    public static Address fromStream(StringStream stream) {
-        if (stream.getFirst().equals("null") && stream.elementsLeft() == 1) {
+    public static Address fromStream(CSVStreamLikeReader stream) throws IOException {
+        if (stream.getNext().equals("null") && stream.getElementLeftInLine() == 1) {
+            stream.readElem();
             return null;
         }
 
         return new Address(
-                ConvertToStreamHelper.convertNullableFromStream(stream, Stream::read),
+                ConvertToStreamHelper.convertNullableFromStream(stream, CSVStreamLikeReader::readElem),
                 Location.fromStream(stream)
         );
     }
 
     @Override
-    public void writeToStream(StringStream stream) {
-        WritableToStream.writeNullableToStream(stream, zipCode, stream::write);
+    public void writeToStream(CSVStreamWriter stream) throws IOException {
+        WritableToCSVStream.writeNullableToStream(stream, zipCode, stream::append);
         town.writeToStream(stream);
     }
 }

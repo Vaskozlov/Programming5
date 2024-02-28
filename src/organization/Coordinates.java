@@ -2,7 +2,9 @@ package organization;
 
 import lib.*;
 
-public record Coordinates(long x, long y) implements YamlConvertable, WritableToStream {
+import java.io.IOException;
+
+public record Coordinates(long x, long y) implements YamlConvertable, WritableToCSVStream {
 
     public Coordinates {
         if (y > 464) {
@@ -22,13 +24,13 @@ public record Coordinates(long x, long y) implements YamlConvertable, WritableTo
         return build;
     }
 
-    public static Coordinates fromStream(StringStream stream) {
-        return new Coordinates(Long.parseLong(stream.read()), Long.parseLong(stream.read()));
+    public static Coordinates fromStream(CSVStreamLikeReader stream) throws IOException {
+        return new Coordinates(Long.parseLong(stream.readElem()), Long.parseLong(stream.readElem()));
     }
 
     @Override
-    public void writeToStream(StringStream stream) {
-        stream.writeAny(x);
-        stream.writeAny(y);
+    public void writeToStream(CSVStreamWriter stream) throws IOException {
+        stream.append(String.valueOf(x));
+        stream.append(String.valueOf(y));
     }
 }

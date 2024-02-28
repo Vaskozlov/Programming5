@@ -1,68 +1,43 @@
 package organization;
 
+import client.OrganizationPrototype;
 import exceptions.IllegalArgumentsForOrganizationException;
 import lib.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 
-public record Organization(
-        int id,
-        String name,
-        Coordinates coordinates,
-        LocalDate creationDate,
-        float annualTurnover,
-        String fullName,
-        Integer employeesCount,
-        OrganizationType type,
-        Address postalAddress
-) implements YamlConvertable, WritableToStream, Comparable<Organization> {
+public class Organization extends OrganizationPrototype implements YamlConvertable, WritableToCSVStream {
+    public Organization(
+            Integer id,
+            String name,
+            Coordinates coordinates,
+            LocalDate creationDate,
+            Float annualTurnover,
+            String fullName,
+            Integer employeesCount,
+            OrganizationType type,
+            Address postalAddress
+    ) {
+        super(id, name, coordinates, creationDate, annualTurnover, fullName, employeesCount, type, postalAddress);
 
-    /**
-     * @param name           can not be null or empty
-     * @param coordinates    can not be null
-     * @param annualTurnover can not be below zero
-     * @param fullName       can not be null or empty
-     * @param employeesCount nullable
-     * @param type           nullable
-     * @param postalAddress  nullable
-     */
-    public Organization {
-        if (name == null) {
-            throw new IllegalArgumentsForOrganizationException("Name must not be null");
-        }
+        ValidationResult validationResult = checkCorrectness();
 
-        if (name.isEmpty()) {
-            throw new IllegalArgumentsForOrganizationException("Name must not be empty");
-        }
-
-        if (coordinates == null) {
-            throw new IllegalArgumentsForOrganizationException("organization.Coordinates must not be null");
-        }
-
-        if (annualTurnover <= 0.0) {
-            throw new IllegalArgumentsForOrganizationException("Annual turnover must be above zero");
-        }
-
-        if (fullName == null) {
-            throw new IllegalArgumentsForOrganizationException("Full name must not be null");
-        }
-
-        if (fullName.length() > 573) {
-            throw new IllegalArgumentsForOrganizationException("Full name too long, it's length must be within 573 symbols");
-        }
-
-        if (employeesCount != null && employeesCount < 0) {
-            throw new IllegalArgumentsForOrganizationException("Employees count must not be negative");
+        if (!validationResult.isValid()) {
+            throw new IllegalArgumentsForOrganizationException(validationResult.getReason());
         }
     }
 
-    public ImmutablePair<String, OrganizationType> toPairOfFullNameAndType() {
-        return new ImmutablePair<>(fullName, type);
-    }
-
-    @Override
-    public int compareTo(Organization other) {
-        return fullName.compareTo(other.fullName);
+    public void fillNullFromAnotherOrganization(OrganizationPrototype organization) {
+        id = id == null ? organization.getId() : id;
+        name = name == null ? organization.getName() : name;
+        coordinates = coordinates == null ? organization.getCoordinates() : coordinates;
+        creationDate = creationDate == null ? organization.getCreationDate() : creationDate;
+        annualTurnover = annualTurnover == null ? organization.getAnnualTurnover() : annualTurnover;
+        fullName = fullName == null ? organization.getFullName() : fullName;
+        employeesCount = employeesCount == null ? organization.getEmployeesCount() : employeesCount;
+        type = type == null ? organization.getType() : type;
+        postalAddress = postalAddress == null ? organization.getPostalAddress() : postalAddress;
     }
 
     @Override
@@ -71,7 +46,7 @@ public record Organization(
         builder.increaseIdent();
 
         builder.appendLine("name: %s", name);
-        coordinates.constructYaml(builder);
+        getCoordinates().constructYaml(builder);
         builder.appendLine("creationDate: %s", creationDate.toString());
         builder.appendLine("annualTurnover: %s", annualTurnover);
         builder.appendLine("fullName: %s", fullName);
@@ -89,41 +64,41 @@ public record Organization(
         return builder;
     }
 
-    public static Organization fromStream(StringStream stream) {
+    public static Organization fromStream(CSVStreamLikeReader stream) throws IOException{
         return new Organization(
-                Integer.parseInt(stream.read()),
-                stream.read(),
+                Integer.parseInt(stream.readElem()),
+                stream.readElem(),
                 Coordinates.fromStream(stream),
-                LocalDate.parse(stream.read()),
-                Float.parseFloat(stream.read()),
-                stream.read(),
+                LocalDate.parse(stream.readElem()),
+                Float.parseFloat(stream.readElem()),
+                stream.readElem(),
                 ConvertToStreamHelper.convertNullableFromStream(
                         stream,
-                        (StringStream dataStream) ->
-                                Integer.parseInt(dataStream.read())
+                        (CSVStreamLikeReader dataStream) ->
+                                Integer.parseInt(dataStream.readElem())
                 ),
                 ConvertToStreamHelper.convertNullableFromStream(
                         stream,
-                        (StringStream dataStream) ->
-                                OrganizationType.valueOf(dataStream.read())
+                        (CSVStreamLikeReader dataStream) ->
+                                OrganizationType.valueOf(dataStream.readElem())
                 ),
                 Address.fromStream(stream)
         );
     }
 
     @Override
-    public void writeToStream(StringStream stream) {
-        stream.writeAny(id);
-        stream.write(name);
+    public void writeToStream(CSVStreamWriter stream) throws IOException {
+        stream.append(id);
+        stream.append(name);
         coordinates.writeToStream(stream);
-        stream.write(creationDate.toString());
-        stream.writeAny(annualTurnover);
-        stream.write(fullName);
+        stream.append(creationDate.toString());
+        stream.append(annualTurnover);
+        stream.append(fullName);
 
-        WritableToStream.writeNullableToStream(stream, employeesCount, stream::writeAny);
-        WritableToStream.writeNullableToStream(stream, type, stream::writeAny);
+        WritableToCSVStream.writeNullableToStream(stream, getEmployeesCount(), stream::append);
+        WritableToCSVStream.writeNullableToStream(stream, getType().toString(), stream::append);
 
-        WritableToStream.writeNullableToStream(stream, postalAddress, (Address address) ->
+        WritableToCSVStream.writeNullableToStream(stream, getPostalAddress(), (Address address) ->
                 address.writeToStream(stream)
         );
     }

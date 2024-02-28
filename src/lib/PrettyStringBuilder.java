@@ -30,6 +30,9 @@ public class PrettyStringBuilder {
         ident.incrementAndGet();
     }
 
+    /**
+     * decreases ident, if it is less than zero throws BadIdentException exception
+     */
     public void decreaseIdent() {
         ident.decrementAndGet();
 

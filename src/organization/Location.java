@@ -2,6 +2,8 @@ package organization;
 
 import lib.*;
 
+import java.io.IOException;
+
 /**
  * @param z    can not be null
  * @param name nullable, length can not be greater than 933
@@ -10,7 +12,7 @@ public record Location(
         double x,
         float y,
         Long z,
-        String name) implements YamlConvertable, WritableToStream {
+        String name) implements YamlConvertable, WritableToCSVStream {
 
     public Location {
         if (z == null) {
@@ -37,20 +39,20 @@ public record Location(
         return builder;
     }
 
-    public static Location fromStream(StringStream stream) {
+    public static Location fromStream(CSVStreamLikeReader stream) throws IOException{
         return new Location(
-                Double.parseDouble(stream.read()),
-                Float.parseFloat(stream.read()),
-                Long.parseLong(stream.read()),
-                ConvertToStreamHelper.convertNullableFromStream(stream, Stream::read)
+                Double.parseDouble(stream.readElem()),
+                Float.parseFloat(stream.readElem()),
+                Long.parseLong(stream.readElem()),
+                ConvertToStreamHelper.convertNullableFromStream(stream, CSVStreamLikeReader::readElem)
         );
     }
 
     @Override
-    public void writeToStream(StringStream stream) {
-        stream.writeAny(x);
-        stream.writeAny(y);
-        stream.writeAny(z);
-        WritableToStream.writeNullableToStream(stream, name, stream::write);
+    public void writeToStream(CSVStreamWriter stream) throws IOException {
+        stream.append(x);
+        stream.append(y);
+        stream.append(z);
+        WritableToCSVStream.writeNullableToStream(stream, name, stream::append);
     }
 }

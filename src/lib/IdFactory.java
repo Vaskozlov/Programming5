@@ -16,10 +16,16 @@ public class IdFactory {
         this.currentId = new AtomicInteger(value);
     }
 
+    /**
+     * sets base value for factory
+     */
     public void setValue(int value) {
         currentId = new AtomicInteger(value);
     }
 
+    /**
+     * @return unique id
+     */
     public int generateId() {
         return currentId.getAndIncrement();
     }

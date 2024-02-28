@@ -6,14 +6,16 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lib.*;
 import exceptions.*;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class OrganizationManager {
-    private static final String CSVHeader = "id;name;coordinates.x;coordinates.y;creation date;annual turnover;full name;employees count;type;postalAddress:zipCode;postalAddress.organization.Location.x;postalAddress.organization.Location.y;postalAddress.organization.Location.z;postalAddress.organization.Location.name\n";
+    private static final String CSVHeader = "id;name;coordinates.x;coordinates.y;creation date;annual turnover;full name;employees count;type;postalAddress:zipCode;postalAddress.organization.Location.x;postalAddress.organization.Location.y;postalAddress.organization.Location.z;postalAddress.organization.Location.name";
 
     private IdFactory idFactory = new IdFactory(1);
     private final LinkedList<Organization> organizations = new LinkedList<>();
@@ -38,7 +40,7 @@ public class OrganizationManager {
         float result = 0.0f;
 
         for (Organization organization : organizations) {
-            result += organization.annualTurnover();
+            result += organization.getAnnualTurnover();
         }
 
         return result;
@@ -49,10 +51,10 @@ public class OrganizationManager {
     }
 
     public Organization constructOrganization(BufferedReaderWithQueueOfStreams reader, Organization defaultValues) throws KeyboardInterruptException, IOException {
-        int id = defaultValues == null ? idFactory.generateId() : defaultValues.id();
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, defaultValues);
+        int id = defaultValues == null ? idFactory.generateId() : defaultValues.getId();
+        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, defaultValues != null);
 
-        return new Organization(
+        Organization newOrganization = new Organization(
                 id,
                 organizationBuilder.getName(),
                 organizationBuilder.getCoordinates(),
@@ -63,6 +65,12 @@ public class OrganizationManager {
                 organizationBuilder.getOrganizationType(),
                 organizationBuilder.getAddress()
         );
+
+        if (defaultValues != null) {
+            newOrganization.fillNullFromAnotherOrganization(defaultValues);
+        }
+
+        return newOrganization;
     }
 
     public void add(Organization... newOrganizations) throws OrganizationAlreadyPresentedException {
@@ -84,7 +92,7 @@ public class OrganizationManager {
     public void modifyOrganization(int organizationId, BufferedReaderWithQueueOfStreams reader)
             throws KeyboardInterruptException, IOException, OrganizationAlreadyPresentedException {
         for (Organization organization : organizations) {
-            if (organization.id() == organizationId) {
+            if (organization.getId() == organizationId) {
                 completeModification(organization, reader);
                 break;
             }
@@ -92,7 +100,7 @@ public class OrganizationManager {
     }
 
     public void removeAllByPostalAddress(BufferedReaderWithQueueOfStreams reader) throws KeyboardInterruptException, IOException {
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader);
+        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, false);
         Address address = organizationBuilder.getAddress();
         removeAllByPostalAddress(address);
     }
@@ -102,7 +110,7 @@ public class OrganizationManager {
         List<ImmutablePair<String, OrganizationType>> pairsToRemove = new ArrayList<>();
 
         for (Organization organization : organizations) {
-            if (organization.postalAddress().equals(address)) {
+            if (organization.getPostalAddress().equals(address)) {
                 toRemove.add(organization);
                 pairsToRemove.add(organization.toPairOfFullNameAndType());
             }
@@ -114,7 +122,7 @@ public class OrganizationManager {
 
     public void removeOrganization(int id) throws OrganizationNotFoundException {
         for (Organization organization : organizations) {
-            if (organization.id() == id) {
+            if (organization.getId() == id) {
                 storedOrganizations.remove(organization.toPairOfFullNameAndType());
                 organizations.remove(organization);
                 return;
@@ -140,7 +148,7 @@ public class OrganizationManager {
         storedOrganizations.clear();
     }
 
-    public boolean loadFromFile(String filename) throws OrganizationAlreadyPresentedException {
+    private boolean tryToLoadFromFile(String filename) throws OrganizationAlreadyPresentedException, IOException {
         clear();
 
         String fileContent = IOHelper.readFile(filename);
@@ -150,18 +158,11 @@ public class OrganizationManager {
         }
 
         int maxId = 0;
-        boolean initialized = false;
-        String[] lines = fileContent.split("\n");
+        CSVStreamLikeReader reader = new CSVStreamLikeReader(fileContent.substring(fileContent.indexOf('\n') + 1));
 
-        for (String line : lines) {
-            if (!initialized) {
-                initialized = true;
-                continue;
-            }
-
-            StringStream stream = new StringStream(Arrays.asList(line.split(";")));
-            Organization newOrganization = Organization.fromStream(stream);
-            maxId = Math.max(maxId, newOrganization.id());
+        while (!reader.isEndOfStream()) {
+            Organization newOrganization = Organization.fromStream(reader);
+            maxId = Math.max(maxId, newOrganization.getId());
 
             add(newOrganization);
         }
@@ -170,26 +171,36 @@ public class OrganizationManager {
         return true;
     }
 
+    public boolean loadFromFile(String filename) {
+        try {
+            return tryToLoadFromFile(filename);
+        } catch (Exception ignored) {
+        }
+
+        return false;
+    }
+
     public boolean saveToFile(String filename) {
         try (FileWriter file = new FileWriter(filename)) {
             file.write(toCSV());
+            file.flush();
             return true;
         } catch (IOException exception) {
             return false;
         }
     }
 
-    public String toCSV() {
-        StringBuilder builder = new StringBuilder(CSVHeader);
+    public String toCSV() throws IOException {
+        CSVStreamWriter stream = new CSVStreamWriter(new StringWriter());
+        stream.append(CSVHeader);
+        stream.newLine();
 
         for (Organization organization : organizations) {
-            StringStream stream = new StringStream();
             organization.writeToStream(stream);
-            builder.append(String.join(";", stream));
-            builder.append('\n');
+            stream.newLine();
         }
 
-        return builder.toString();
+        return stream.getWriter().toString();
     }
 
     public String toYaml() {
@@ -230,7 +241,7 @@ public class OrganizationManager {
     }
 
     private boolean isModificationLegal(Organization previous, Organization newVersion) {
-        if (!previous.fullName().equals(newVersion.fullName()) || !previous.type().equals(newVersion.type())) {
+        if (!previous.getFullName().equals(newVersion.getFullName()) || !previous.getType().equals(newVersion.getType())) {
             return !isOrganizationAlreadyPresented(newVersion);
         }
 

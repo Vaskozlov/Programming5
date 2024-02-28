@@ -1,3 +1,5 @@
+package client;
+
 import exceptions.KeyboardInterruptException;
 import exceptions.OrganizationAlreadyPresentedException;
 import exceptions.OrganizationNotFoundException;
@@ -19,6 +21,10 @@ public class Application {
 
     public Application() {
         Localization.loadBundle("localization/localization", "en");
+    }
+
+    public void stop() {
+        needToStop = true;
     }
 
     public void start(String database) throws IOException, OrganizationAlreadyPresentedException {
@@ -153,7 +159,7 @@ public class Application {
 
     private void printByMaxValueOfFullName() {
         Organization maxOrganization = Collections.max(organizationManager.getOrganizations(),
-                Comparator.comparing(Organization::fullName));
+                Comparator.comparing(Organization::getFullName));
 
         if (maxOrganization != null) {
             System.out.println(maxOrganization.toYaml());
@@ -221,9 +227,9 @@ public class Application {
     private void tryToAddMaxOrganization() throws IOException, KeyboardInterruptException, OrganizationAlreadyPresentedException {
         Organization newOrganization = organizationManager.constructOrganization(bufferedReaderWithQueueOfStreams);
         Organization maxOrganization = Collections.max(organizationManager.getOrganizations(),
-                Comparator.comparing(Organization::fullName));
+                Comparator.comparing(Organization::getFullName));
 
-        if (maxOrganization.fullName().compareTo(newOrganization.fullName()) < 0) {
+        if (maxOrganization.getFullName().compareTo(newOrganization.getFullName()) < 0) {
             organizationManager.add(newOrganization);
             System.out.println(Localization.get("message.collection.add.succeed"));
         } else {

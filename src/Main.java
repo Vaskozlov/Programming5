@@ -1,3 +1,4 @@
+import client.Application;
 import exceptions.OrganizationAlreadyPresentedException;
 import lib.Localization;
 
