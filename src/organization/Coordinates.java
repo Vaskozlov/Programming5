@@ -4,12 +4,16 @@ import lib.*;
 
 import java.io.IOException;
 
-public record Coordinates(long x, long y) implements YamlConvertable, WritableToCSVStream {
-
-    public Coordinates {
-        if (y > 464) {
-            throw new IllegalArgumentException("Coordinates() y can not be greater than 464");
+public record Coordinates(Long x, Long y) implements YamlConvertable, WritableToCSVStream {
+    public static Coordinates joinCoordinates(Coordinates first, Coordinates second) {
+        if (first == null) {
+            return second;
         }
+
+        return new Coordinates(
+                first.x() == null ? second.x() : first.x(),
+                first.y() == null ? second.y() : first.y()
+        );
     }
 
     @Override

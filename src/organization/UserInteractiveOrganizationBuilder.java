@@ -1,7 +1,7 @@
 package organization;
 
 import exceptions.KeyboardInterruptException;
-import lib.FunctionWithArgumentAndReturnType;
+import lib.functions.FunctionWithArgumentAndReturnType;
 import lib.Localization;
 import lib.BufferedReaderWithQueueOfStreams;
 
@@ -48,14 +48,14 @@ public class UserInteractiveOrganizationBuilder {
         return new Coordinates(x, y);
     }
 
-    public float getAnnualTurnover() throws KeyboardInterruptException, IOException {
+    public Float getAnnualTurnover() throws KeyboardInterruptException, IOException {
         Float annualTurnover = getNumber(
                 Localization.get("organization_builder.input.annual_turnover"),
                 false,
                 Float::parseFloat
         );
 
-        if (annualTurnover <= 0) {
+        if (annualTurnover != null && annualTurnover <= 0) {
             System.out.println(Localization.get("organization_builder.input.annual_turnover.limit.message"));
             return getAnnualTurnover();
         }
@@ -205,7 +205,7 @@ public class UserInteractiveOrganizationBuilder {
         System.out.printf(
                 Localization.get("organization_builder.input.get"),
                 fieldName,
-                nullable ? Localization.get("input.nullable") : ""
+                nullable ? String.format(" (%s) ", Localization.get("input.nullable")) : ""
         );
         return reader.readLine();
     }

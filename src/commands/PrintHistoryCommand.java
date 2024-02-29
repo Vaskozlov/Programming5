@@ -5,14 +5,13 @@ import commands.core.ClientSideCommand;
 import lib.ExecutionStatus;
 import lib.functions.CallbackFunction;
 
-public class ExitCommand extends ClientSideCommand {
-    public ExitCommand(CallbackFunction callbackFunction, Application application) {
+public class PrintHistoryCommand extends ClientSideCommand {
+    public PrintHistoryCommand(CallbackFunction callbackFunction, Application application) {
         super(callbackFunction, application);
     }
 
     @Override
     protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
-        application.stop();
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+        callback.invoke(ExecutionStatus.SUCCESS, null, application.getCommandsHistory());
     }
 }

@@ -1,21 +1,20 @@
 package commands;
 
+import commands.core.ServerSideCommand;
 import lib.ExecutionStatus;
-import lib.FunctionWithVoidReturnAndOneArgument;
+import lib.functions.CallbackFunction;
 import organization.OrganizationManager;
-
-import java.util.List;
 
 public class SaveCommand extends ServerSideCommand {
 
-    public SaveCommand(OrganizationManager organizationManager) {
-        super(organizationManager);
+    public SaveCommand(CallbackFunction callbackFunction, OrganizationManager organizationManager) {
+        super(callbackFunction, organizationManager);
     }
 
     @Override
-    public void execute(List<String> args, FunctionWithVoidReturnAndOneArgument<ExecutionStatus> callback) {
-        String filename = args.get(0);
+    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+        String filename = args[0];
         boolean isSuccessfullySaved = organizationManager.saveToFile(filename);
-        callback.invoke(isSuccessfullySaved ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE);
+        callback.invoke(isSuccessfullySaved ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE, null, filename);
     }
 }

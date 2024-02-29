@@ -1,5 +1,7 @@
 package lib;
 
+import lib.functions.FunctionWithArgumentAndReturnType;
+
 import java.io.IOException;
 
 public class ConvertToStreamHelper {

@@ -9,8 +9,8 @@ import java.io.IOException;
  * @param name nullable, length can not be greater than 933
  */
 public record Location(
-        double x,
-        float y,
+        Double x,
+        Float y,
         Long z,
         String name) implements YamlConvertable, WritableToCSVStream {
 
@@ -22,6 +22,19 @@ public record Location(
         if (name != null && name.length() > 933) {
             throw new IllegalArgumentException("organization.Location() name is too long! It can not contain more than than 933 symbols.");
         }
+    }
+
+    public static Location joinLocations(Location first, Location second) {
+        if (first == null) {
+            return second;
+        }
+
+        return new Location(
+                first.x() == null ? second.x() : first.x(),
+                first.y() == null ? second.y() : first.y(),
+                first.z() == null ? second.z() : first.z(),
+                first.name() == null ? second.name() : first.name()
+        );
     }
 
     @Override
@@ -39,7 +52,7 @@ public record Location(
         return builder;
     }
 
-    public static Location fromStream(CSVStreamLikeReader stream) throws IOException{
+    public static Location fromStream(CSVStreamLikeReader stream) throws IOException {
         return new Location(
                 Double.parseDouble(stream.readElem()),
                 Float.parseFloat(stream.readElem()),

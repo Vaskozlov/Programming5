@@ -26,7 +26,7 @@ public class IdFactory {
     /**
      * @return unique id
      */
-    public int generateId() {
+    public int getNextId() {
         return currentId.getAndIncrement();
     }
 }

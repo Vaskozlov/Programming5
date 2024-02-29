@@ -25,7 +25,7 @@ public class CSVStreamLikeReader {
     }
 
     public boolean isEndOfStream() {
-        return lineIndex >= data.length;
+        return lineIndex  + (isEndOfLine() ? 1 : 0) >= data.length;
     }
 
     public int getElementLeftInLine() {

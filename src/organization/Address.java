@@ -9,7 +9,7 @@ import java.io.IOException;
  * @param town    can not be null
  */
 public record Address(String zipCode, Location town) implements YamlConvertable, WritableToCSVStream {
-    public Address {
+    public void validate() throws IllegalArgumentException {
         if (zipCode != null && zipCode.length() < 3) {
             throw new IllegalArgumentException("Invalid zip code");
         }
@@ -17,6 +17,17 @@ public record Address(String zipCode, Location town) implements YamlConvertable,
         if (town == null) {
             throw new IllegalArgumentException("organization.Address town must not be null");
         }
+    }
+
+    public static Address joinAddresses(Address first, Address second) {
+        if (first == null) {
+            return second;
+        }
+
+        return new Address(
+                first.zipCode() == null ? second.zipCode() : first.zipCode(),
+                Location.joinLocations(first.town(), second.town())
+        );
     }
 
     @Override

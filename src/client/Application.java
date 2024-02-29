@@ -1,33 +1,337 @@
 package client;
 
-import exceptions.KeyboardInterruptException;
-import exceptions.OrganizationAlreadyPresentedException;
-import exceptions.OrganizationNotFoundException;
-import lib.CircledStorage;
-import lib.Localization;
-import lib.BufferedReaderWithQueueOfStreams;
-import organization.Organization;
+import commands.*;
+import commands.core.Command;
+import exceptions.*;
+import lib.*;
 import organization.OrganizationManager;
 
 import java.io.*;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 public class Application {
     private boolean needToStop = false;
     private final OrganizationManager organizationManager = new OrganizationManager();
     private final BufferedReaderWithQueueOfStreams bufferedReaderWithQueueOfStreams = new BufferedReaderWithQueueOfStreams(new InputStreamReader(System.in));
     private final CircledStorage<String> commandsHistory = new CircledStorage<>(11);
+    private HashMap<String, Command> commandsWithLocaleNames;
 
-    public Application() {
-        Localization.loadBundle("localization/localization", "en");
+    private ArrayList<ImmutablePair<String, Command>> commandList = new ArrayList<>(
+            Arrays.asList(
+                    new ImmutablePair<>(
+                            "command.help",
+                            new HelpCommand(this::helpCommandCallback, this)
+                    ),
+                    new ImmutablePair<>(
+                            "command.info",
+                            new InfoCommand(this::infoCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.show",
+                            new ShowCommand(this::showCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.add",
+                            new AddCommand(this::addCommandCallback, this, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.update",
+                            new UpdateCommand(this::modifyOrganizationCommandCallback, this, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.remove_by_id",
+                            new RemoveByIdCommand(this::removeCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.clear",
+                            new ClearCommand(this::clearCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.save",
+                            new SaveCommand(this::saveCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.read",
+                            new ReadCommand(this::readCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.execute_script",
+                            new ExecuteScriptCommand(this::executeScriptCommandCallback, this)
+                    ),
+                    new ImmutablePair<>(
+                            "command.exit",
+                            new ExitCommand(this::exitCommandCallback, this)
+                    ),
+                    new ImmutablePair<>(
+                            "command.remove_head",
+                            new RemoveHeadCommand(this::removeHeadCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.add_if_max",
+                            new AddIfMaxCommand(this::addMaxCommandCallback, this, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.history",
+                            new ShowCommand(this::showHistoryCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.max_by_full_name",
+                            new MaxByFullNameCommand(this::maxByFullNameCommandCallback, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.remove_all_by_postal_address",
+                            new RemoveAllByPostalAddressCommand(this::removeAllByPostalAddressCommandCallback, this, organizationManager)
+                    ),
+                    new ImmutablePair<>(
+                            "command.sum_of_annual_turnover",
+                            new SumOfAnnualTurnoverCommand(this::sumOfAnnualTurnoverCommandCallback, organizationManager)
+                    )
+            )
+    );
+
+    public BufferedReaderWithQueueOfStreams getBufferedReaderWithQueueOfStreams() {
+        return bufferedReaderWithQueueOfStreams;
+    }
+
+    public CircledStorage<String> getCommandsHistory() {
+        return commandsHistory;
+    }
+
+    private void showCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(result[0]);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void exitCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.exit"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void helpCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(result[0]);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void infoCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(result[0]);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void clearCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.collection_cleared"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void saveCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        String filename = (String) result[0];
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.printf(
+                    "%s %s.%n",
+                    Localization.get("message.collection.unable_to_save_to_file"),
+                    filename
+            );
+        } else {
+            System.out.printf(
+                    "%s %s.%n",
+                    Localization.get("message.collection.saved_to_file"),
+                    filename
+            );
+        }
+    }
+
+    private void readCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        String filename = (String) result[0];
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.printf("%s %s.%n", Localization.get("message.collection.load.failed"), filename);
+        } else {
+            System.out.printf("%s.%n", Localization.get("message.collection.load.succeed"));
+        }
+    }
+
+    private void addCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.collection.add.succeed"));
+        } else if (error instanceof KeyboardInterruptException) {
+            System.out.println(Localization.get("message.collection.add.canceled"));
+        } else if (error instanceof IllegalArgumentException) {
+            System.out.println(Localization.get("message.collection.add.failed"));
+        } else if (error instanceof OrganizationAlreadyPresentedException) {
+            System.out.println(Localization.get("message.organization.error.already_presented"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void addMaxCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.collection.add.succeed"));
+        } else if (error instanceof KeyboardInterruptException) {
+            System.out.println(Localization.get("message.collection.add.canceled"));
+        } else if (error instanceof IllegalArgumentException) {
+            System.out.println(Localization.get("message.collection.add.failed"));
+        } else if (error instanceof OrganizationAlreadyPresentedException) {
+            System.out.println(Localization.get("message.organization.error.already_presented"));
+        } else if (error == null) {
+            System.out.println(Localization.get("message.collection.add.max_check_failed"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void removeCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.organization_removed"));
+        } else if (error instanceof OrganizationNotFoundException) {
+            System.out.println(Localization.get("message.unable_to_remove_organization"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void removeHeadCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(result[0]);
+        } else if (error != null) {
+            System.out.println(Localization.get("message.unable_to_remove_organization"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void removeAllByPostalAddressCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.organizations_by_postal_address_removed"));
+        } else if (error instanceof KeyboardInterruptException) {
+            System.out.println(Localization.get("message.collection.remove.canceled"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void modifyOrganizationCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 0;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.organization_modified"));
+        } else if (error instanceof KeyboardInterruptException) {
+            System.out.println(Localization.get("message.organization.modification_canceled"));
+        } else if (error instanceof IllegalArgumentException) {
+            System.out.println(Localization.get("message.organization.modification_error"));
+        } else if (error instanceof OrganizationAlreadyPresentedException) {
+            System.out.println(Localization.get("message.organization.error.already_presented_after_modification"));
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void maxByFullNameCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(result[0]);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void sumOfAnnualTurnoverCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof Float;
+
+        if (status == ExecutionStatus.SUCCESS) {
+            Float sum = (Float) result[0];
+
+            System.out.printf(
+                    "%s: %f.%n",
+                    Localization.get("message.sum_of_annual_turnover"),
+                    sum
+            );
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void executeScriptCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof String;
+
+        String filename = (String) result[0];
+
+        if (status == ExecutionStatus.SUCCESS) {
+            System.out.println(Localization.get("message.script_execution.started"));
+        } else if (error instanceof FileNotFoundException) {
+            System.out.printf(Localization.get("message.file.not_found"), filename);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
+    }
+
+    private void showHistoryCommandCallback(ExecutionStatus status, Exception error, Object... result) {
+        assert result.length == 1;
+        assert result[0] instanceof CircledStorage;
+
+        CircledStorage<String> history = (CircledStorage<String>) result[0];
+
+        if (status == ExecutionStatus.SUCCESS) {
+            history.applyFunctionOnAllElements(System.out::println);
+        } else {
+            System.out.println(Localization.get("message.command.failed"));
+        }
     }
 
     public void stop() {
         needToStop = true;
     }
 
-    public void start(String database) throws IOException, OrganizationAlreadyPresentedException {
+    public void start(String database) throws IOException {
         if (database != null) {
             organizationManager.loadFromFile(database);
         }
@@ -37,6 +341,14 @@ public class Application {
 
         while (!needToStop) {
             processCommand(bufferedReaderWithQueueOfStreams.readLine().strip());
+        }
+    }
+
+    private void loadCommands() {
+        commandsWithLocaleNames = new HashMap<>();
+
+        for (ImmutablePair<String, Command> command : commandList) {
+            commandsWithLocaleNames.put(Localization.get(command.first()), command.second());
         }
     }
 
@@ -56,250 +368,28 @@ public class Application {
                 chooseLanguage();
             }
         }
+
+        loadCommands();
     }
 
-    private void processCommand(String command) throws IOException, OrganizationAlreadyPresentedException {
-        if (processCommandWithArguments(command)) {
-            addCommandToHistory(command);
-            return;
-        }
+    private void processCommand(String command) {
+        String[] allArguments = command.split(" ");
+        String commandName = allArguments[0];
+        String[] args = Arrays.copyOfRange(allArguments, 1, allArguments.length);
 
-        if (command.equals(Localization.get("command.exit"))) {
-            needToStop = true;
-        } else if (command.equals(Localization.get("command.help"))) {
-            printHelpMessage();
-        } else if (command.equals(Localization.get("command.info"))) {
-            printInfo();
-        } else if (command.equals(Localization.get("command.clear"))) {
-            clearCollection();
-        } else if (command.equals(Localization.get("command.save"))) {
-            saveCollection();
-        } else if (command.equals(Localization.get("command.read"))) {
-            readCollection();
-        } else if (command.equals(Localization.get("command.show"))) {
-            System.out.println(organizationManager.toYaml());
-        } else if (command.equals(Localization.get("command.add"))) {
-            addOrganization();
-        } else if (command.equals(Localization.get("command.add_if_max"))) {
-            addOrganizationIfMax();
-        } else if (command.equals(Localization.get("command.history"))) {
-            printHistory();
-        } else if (command.equals(Localization.get("command.remove_head"))) {
-            removeHead();
-        } else if (command.equals(Localization.get("command.sum_of_annual_turnover"))) {
-            printSumOfAnnualTurnover();
-        } else if (command.equals(Localization.get("command.remove_all_by_postal_address"))) {
-            removeAllByPostalAddress();
-        } else if (command.equals(Localization.get("command.max_by_full_name"))) {
-            printByMaxValueOfFullName();
-        } else if (command.equals(Localization.get("command.execute_script"))) {
-            executeScript();
-        } else if (command.equals(Localization.get("command.update")) || command.equals(Localization.get("command.remove_by_id"))) {
-            System.out.printf(Localization.get("message.command.argument_one.need_argument"), command);
+        if (commandsWithLocaleNames.containsKey(commandName)) {
+            commandsWithLocaleNames.get(commandName).execute(args);
+            addCommandToHistory(commandName);
         } else {
-            System.out.printf(Localization.get("message.command.not_recognized"), command);
-            return;
+            System.out.println(Localization.get("message.command_not_found"));
         }
-
-        addCommandToHistory(command);
-    }
-
-    private boolean processCommandWithArguments(String command) throws IOException {
-        String updateCommandRegex = String.format("%s \\d+", Localization.get("command.update"));
-        String removeByIdCommandRegex = String.format("%s \\d+", Localization.get("command.remove_by_id"));
-        String showCommandRegex = String.format("%s \\w+", Localization.get("command.show"));
-
-        if (command.matches(updateCommandRegex)) {
-            int id = Integer.parseInt(getLastArgument(command));
-            modifyOrganization(id);
-        } else if (command.matches(removeByIdCommandRegex)) {
-            int id = Integer.parseInt(getLastArgument(command));
-            removeOrganization(id);
-        } else if (command.matches(showCommandRegex)) {
-            String mode = getLastArgument(command.toLowerCase());
-
-            switch (mode) {
-                case "json" -> System.out.println(organizationManager.toJson());
-                case "csv" -> System.out.println(organizationManager.toCSV());
-                case "yaml" -> System.out.println(organizationManager.toYaml());
-                default ->
-                        System.out.printf("%s: yaml, json, csv.%n", Localization.get("message.show.unrecognizable_format"));
-            }
-        } else {
-            return false;
-        }
-
-        return true;
     }
 
     private static void printIntroductionMessage() {
         System.out.println(Localization.get("message.introduction"));
     }
 
-    private static void printHelpMessage() {
-        System.out.printf(Localization.get("message.help"));
-    }
-
-    private void printInfo() {
-        System.out.println(organizationManager.getInfo());
-    }
-
-    private String askAndReadFilename() throws IOException {
-        System.out.printf("%s: ", Localization.get("message.ask_for_filename"));
-        return bufferedReaderWithQueueOfStreams.readLine();
-    }
-
-    private void addCommandToHistory(String command) {
-        commandsHistory.append(getFirstArgument(command));
-    }
-
-    private void printHistory() {
-        commandsHistory.applyFunctionOnAllElements(System.out::println);
-    }
-
-    private void printByMaxValueOfFullName() {
-        Organization maxOrganization = Collections.max(organizationManager.getOrganizations(),
-                Comparator.comparing(Organization::getFullName));
-
-        if (maxOrganization != null) {
-            System.out.println(maxOrganization.toYaml());
-        }
-    }
-
-    private void clearCollection() {
-        organizationManager.clear();
-        System.out.println(Localization.get("message.collection_cleared"));
-    }
-
-    private void saveCollection() throws IOException {
-        String filename = askAndReadFilename();
-
-        if (!organizationManager.saveToFile(filename)) {
-            System.out.printf(
-                    "%s %s.%n",
-                    Localization.get("message.collection.unable_to_save_to_file"),
-                    filename
-            );
-        } else {
-            System.out.printf(
-                    "%s %s.%n",
-                    Localization.get("message.collection.saved_to_file"),
-                    filename
-            );
-        }
-    }
-
-    private void readCollection() throws IOException, OrganizationAlreadyPresentedException {
-        String filename = askAndReadFilename();
-
-        if (!organizationManager.loadFromFile(filename)) {
-            System.out.printf("%s %s.%n", Localization.get("message.collection.load.failed"), filename);
-        } else {
-            System.out.printf("%s.%n", Localization.get("message.collection.load.succeed"));
-        }
-    }
-
-    private void addOrganization() throws IOException {
-        try {
-            organizationManager.add(organizationManager.constructOrganization(bufferedReaderWithQueueOfStreams));
-            System.out.println(Localization.get("message.collection.add.succeed"));
-        } catch (KeyboardInterruptException exception) {
-            System.out.println(Localization.get("message.collection.add.canceled"));
-        } catch (IllegalArgumentException illegalAccessException) {
-            System.out.println(Localization.get("message.collection.add.failed"));
-        } catch (OrganizationAlreadyPresentedException exception) {
-            System.out.println(Localization.get("message.organization.error.already_presented"));
-        }
-    }
-
-    private void addOrganizationIfMax() throws IOException {
-        try {
-            tryToAddMaxOrganization();
-        } catch (KeyboardInterruptException exception) {
-            System.out.println(Localization.get("message.collection.add.canceled"));
-        } catch (IllegalArgumentException illegalAccessException) {
-            System.out.println(Localization.get("message.collection.add.failed"));
-        } catch (OrganizationAlreadyPresentedException exception) {
-            System.out.println(Localization.get("message.organization.error.already_presented"));
-        }
-    }
-
-    private void tryToAddMaxOrganization() throws IOException, KeyboardInterruptException, OrganizationAlreadyPresentedException {
-        Organization newOrganization = organizationManager.constructOrganization(bufferedReaderWithQueueOfStreams);
-        Organization maxOrganization = Collections.max(organizationManager.getOrganizations(),
-                Comparator.comparing(Organization::getFullName));
-
-        if (maxOrganization.getFullName().compareTo(newOrganization.getFullName()) < 0) {
-            organizationManager.add(newOrganization);
-            System.out.println(Localization.get("message.collection.add.succeed"));
-        } else {
-            System.out.println(Localization.get("message.collection.add.max_check_failed"));
-        }
-    }
-
-    private void removeOrganization(int id) {
-        try {
-            organizationManager.removeOrganization(id);
-            System.out.println(Localization.get("message.organization_removed"));
-        } catch (OrganizationNotFoundException exception) {
-            System.out.println(Localization.get("message.unable_to_remove_organization"));
-        }
-    }
-
-    private void removeHead() {
-        Organization removedOrganization = organizationManager.removeHead();
-
-        if (removedOrganization != null) {
-            System.out.println(removedOrganization.toYaml());
-        }
-    }
-
-    private void removeAllByPostalAddress() throws IOException {
-        try {
-            organizationManager.removeAllByPostalAddress(bufferedReaderWithQueueOfStreams);
-        } catch (KeyboardInterruptException exception) {
-            System.out.println(Localization.get("message.collection.remove.canceled"));
-        }
-    }
-
-
-    private void modifyOrganization(int id) throws IOException {
-        try {
-            organizationManager.modifyOrganization(id, bufferedReaderWithQueueOfStreams);
-        } catch (KeyboardInterruptException exception) {
-            System.out.println(Localization.get("message.organization.modification_canceled"));
-        } catch (IllegalArgumentException illegalArgumentException) {
-            System.out.println(Localization.get("message.organization.modification_error"));
-        } catch (OrganizationAlreadyPresentedException exception) {
-            System.out.println(Localization.get("message.organization.error.already_presented_after_modification"));
-        }
-    }
-
-    private void printSumOfAnnualTurnover() {
-        System.out.printf(
-                "%s: %f.%n",
-                Localization.get("message.sum_of_annual_turnover"),
-                organizationManager.getSumOfAnnualTurnover()
-        );
-    }
-
-    private void executeScript() throws IOException {
-        String filename = askAndReadFilename();
-
-        try {
-            bufferedReaderWithQueueOfStreams.pushStream(new FileReader(filename));
-        } catch (FileNotFoundException exception) {
-            System.out.printf(Localization.get("message.file.not_found"), filename);
-        }
-    }
-
-    private static String getFirstArgument(String command) {
-        String[] stringParts = command.split(" ");
-        return stringParts[0];
-    }
-
-    private static String getLastArgument(String command) {
-        String[] stringParts = command.split(" ");
-        return stringParts[stringParts.length - 1];
+    public void addCommandToHistory(String command) {
+        commandsHistory.add(command);
     }
 }

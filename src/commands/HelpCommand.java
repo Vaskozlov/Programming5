@@ -1,19 +1,18 @@
 package commands;
 
 import client.Application;
+import commands.core.ClientSideCommand;
 import lib.ExecutionStatus;
-import lib.FunctionWithVoidReturnAndOneArgument;
+import lib.functions.CallbackFunction;
 import lib.Localization;
-import java.util.List;
 
 public class HelpCommand extends ClientSideCommand {
-    public HelpCommand(Application application) {
-        super(application);
+    public HelpCommand(CallbackFunction callbackFunction, Application application) {
+        super(callbackFunction, application);
     }
 
     @Override
-    public void execute(List<String> args, FunctionWithVoidReturnAndOneArgument<ExecutionStatus> callback) {
-        System.out.printf(Localization.get("message.help"));
-        callback.invoke(ExecutionStatus.SUCCESS);
+    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+        callback.invoke(ExecutionStatus.SUCCESS, null, Localization.get("message.help"));
     }
 }

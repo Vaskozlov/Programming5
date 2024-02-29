@@ -1,5 +1,7 @@
 package lib;
 
+import lib.functions.FunctionWithVoidReturnOneArgumentAndError;
+
 import java.io.IOException;
 
 public interface WritableToCSVStream {

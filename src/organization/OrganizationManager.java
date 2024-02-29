@@ -6,11 +6,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lib.*;
 import exceptions.*;
 
-import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -46,33 +44,6 @@ public class OrganizationManager {
         return result;
     }
 
-    public Organization constructOrganization(BufferedReaderWithQueueOfStreams reader) throws KeyboardInterruptException, IOException {
-        return constructOrganization(reader, null);
-    }
-
-    public Organization constructOrganization(BufferedReaderWithQueueOfStreams reader, Organization defaultValues) throws KeyboardInterruptException, IOException {
-        int id = defaultValues == null ? idFactory.generateId() : defaultValues.getId();
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, defaultValues != null);
-
-        Organization newOrganization = new Organization(
-                id,
-                organizationBuilder.getName(),
-                organizationBuilder.getCoordinates(),
-                LocalDate.now(),
-                organizationBuilder.getAnnualTurnover(),
-                organizationBuilder.getFullName(),
-                organizationBuilder.getEmployeesCount(),
-                organizationBuilder.getOrganizationType(),
-                organizationBuilder.getAddress()
-        );
-
-        if (defaultValues != null) {
-            newOrganization.fillNullFromAnotherOrganization(defaultValues);
-        }
-
-        return newOrganization;
-    }
-
     public void add(Organization... newOrganizations) throws OrganizationAlreadyPresentedException {
         for (Organization organization : newOrganizations) {
             add(organization);
@@ -80,29 +51,31 @@ public class OrganizationManager {
     }
 
     public void add(Organization organization) throws OrganizationAlreadyPresentedException {
+        if (organization.getId() == null) {
+            organization.setId(idFactory.getNextId());
+        }
+
         if (isOrganizationAlreadyPresented(organization)) {
             throw new OrganizationAlreadyPresentedException();
         }
 
+        addNoCheck(organization);
+    }
+
+    private void addNoCheck(Organization organization) {
         organizations.add(organization);
         storedOrganizations.add(organization.toPairOfFullNameAndType());
         Collections.sort(organizations);
     }
 
-    public void modifyOrganization(int organizationId, BufferedReaderWithQueueOfStreams reader)
-            throws KeyboardInterruptException, IOException, OrganizationAlreadyPresentedException {
+    public void modifyOrganization(int organizationId, Organization updatedOrganization)
+            throws OrganizationAlreadyPresentedException {
         for (Organization organization : organizations) {
             if (organization.getId() == organizationId) {
-                completeModification(organization, reader);
+                completeModification(organization, updatedOrganization);
                 break;
             }
         }
-    }
-
-    public void removeAllByPostalAddress(BufferedReaderWithQueueOfStreams reader) throws KeyboardInterruptException, IOException {
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, false);
-        Address address = organizationBuilder.getAddress();
-        removeAllByPostalAddress(address);
     }
 
     public void removeAllByPostalAddress(Address address) {
@@ -163,7 +136,6 @@ public class OrganizationManager {
         while (!reader.isEndOfStream()) {
             Organization newOrganization = Organization.fromStream(reader);
             maxId = Math.max(maxId, newOrganization.getId());
-
             add(newOrganization);
         }
 
@@ -228,15 +200,15 @@ public class OrganizationManager {
         }
     }
 
-    private void completeModification(Organization organization, BufferedReaderWithQueueOfStreams reader)
-            throws KeyboardInterruptException, IOException, OrganizationAlreadyPresentedException {
-        Organization updatedOrganization = constructOrganization(reader, organization);
+    private void completeModification(Organization organization, Organization updatedOrganization)
+            throws OrganizationAlreadyPresentedException {
+        updatedOrganization.fillNullFromAnotherOrganization(organization);
 
         if (!isModificationLegal(organization, updatedOrganization)) {
             throw new OrganizationAlreadyPresentedException();
         }
 
-        add(constructOrganization(reader, organization));
+        addNoCheck(updatedOrganization);
         organizations.remove(organization);
     }
 

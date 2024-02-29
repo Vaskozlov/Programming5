@@ -1,5 +1,7 @@
 package lib;
 
+import lib.functions.FunctionWithVoidReturnAndOneArgument;
+
 import java.util.Arrays;
 
 /**
@@ -27,7 +29,7 @@ public class CircledStorage<T> {
     /**
      * Appends value to the CircleStorage, if storage is out of spaces overrides the oldest-added element
      */
-    public void append(T value) {
+    public void add(T value) {
         set(value, currentIndex++);
     }
 

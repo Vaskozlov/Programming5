@@ -1,21 +1,23 @@
 package commands;
 
+import commands.core.ServerSideCommand;
 import lib.ExecutionStatus;
-import lib.FunctionWithVoidReturnAndOneArgument;
+import lib.functions.CallbackFunction;
+import lib.functions.FunctionWithVoidReturnAndOneArgument;
 import organization.OrganizationManager;
 
 import java.util.List;
 
 public class ReadCommand extends ServerSideCommand {
 
-    public ReadCommand(OrganizationManager organizationManager) {
-        super(organizationManager);
+    public ReadCommand(CallbackFunction callbackFunction, OrganizationManager organizationManager) {
+        super(callbackFunction, organizationManager);
     }
 
     @Override
-    public void execute(List<String> args, FunctionWithVoidReturnAndOneArgument<ExecutionStatus> callback) {
-        String filename = args.get(0);
+    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+        String filename = args[0];
         boolean isSuccessfullyLoaded = organizationManager.loadFromFile(filename);
-        callback.invoke(isSuccessfullyLoaded ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE);
+        callback.invoke(isSuccessfullyLoaded ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE, null, filename);
     }
 }

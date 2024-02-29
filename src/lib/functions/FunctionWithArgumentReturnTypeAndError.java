@@ -1,4 +1,4 @@
-package lib;
+package lib.functions;
 
 @FunctionalInterface
 public interface FunctionWithArgumentReturnTypeAndError<R, A, E extends Throwable> {

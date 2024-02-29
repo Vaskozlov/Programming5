@@ -1,20 +1,20 @@
 package commands;
 
+import commands.core.ServerSideCommand;
 import lib.ExecutionStatus;
-import lib.FunctionWithVoidReturnAndOneArgument;
+import lib.functions.CallbackFunction;
+import lib.functions.FunctionWithVoidReturnAndOneArgument;
 import organization.OrganizationManager;
 
 import java.util.List;
 
 public class InfoCommand extends ServerSideCommand {
-
-    public InfoCommand(OrganizationManager organizationManager) {
-        super(organizationManager);
+    public InfoCommand(CallbackFunction callbackFunction, OrganizationManager organizationManager) {
+        super(callbackFunction, organizationManager);
     }
 
     @Override
-    public void execute(List<String> args, FunctionWithVoidReturnAndOneArgument<ExecutionStatus> callback) {
-        System.out.println(organizationManager.getInfo());
-        callback.invoke(ExecutionStatus.SUCCESS);
+    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+        callback.invoke(ExecutionStatus.SUCCESS, null, organizationManager.getInfo());
     }
 }

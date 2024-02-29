@@ -1,4 +1,4 @@
-package lib;
+package lib.functions;
 
 import java.io.IOException;
 

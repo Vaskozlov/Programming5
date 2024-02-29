@@ -20,7 +20,13 @@ public class Organization extends OrganizationPrototype implements YamlConvertab
             Address postalAddress
     ) {
         super(id, name, coordinates, creationDate, annualTurnover, fullName, employeesCount, type, postalAddress);
+    }
 
+    public void setId(int newId) {
+        id = newId;
+    }
+
+    public void validate() {
         ValidationResult validationResult = checkCorrectness();
 
         if (!validationResult.isValid()) {
@@ -31,13 +37,13 @@ public class Organization extends OrganizationPrototype implements YamlConvertab
     public void fillNullFromAnotherOrganization(OrganizationPrototype organization) {
         id = id == null ? organization.getId() : id;
         name = name == null ? organization.getName() : name;
-        coordinates = coordinates == null ? organization.getCoordinates() : coordinates;
+        coordinates = Coordinates.joinCoordinates(coordinates, organization.getCoordinates());
         creationDate = creationDate == null ? organization.getCreationDate() : creationDate;
         annualTurnover = annualTurnover == null ? organization.getAnnualTurnover() : annualTurnover;
         fullName = fullName == null ? organization.getFullName() : fullName;
         employeesCount = employeesCount == null ? organization.getEmployeesCount() : employeesCount;
         type = type == null ? organization.getType() : type;
-        postalAddress = postalAddress == null ? organization.getPostalAddress() : postalAddress;
+        postalAddress = Address.joinAddresses(postalAddress, organization.getPostalAddress());
     }
 
     @Override
@@ -64,7 +70,7 @@ public class Organization extends OrganizationPrototype implements YamlConvertab
         return builder;
     }
 
-    public static Organization fromStream(CSVStreamLikeReader stream) throws IOException{
+    public static Organization fromStream(CSVStreamLikeReader stream) throws IOException {
         return new Organization(
                 Integer.parseInt(stream.readElem()),
                 stream.readElem(),
