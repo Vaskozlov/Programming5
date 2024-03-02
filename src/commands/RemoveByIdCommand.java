@@ -12,7 +12,7 @@ public class RemoveByIdCommand extends ServerSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) throws Exception {
+    protected void executeImplementation(String[] args, CallbackFunction callback) throws Exception {
         int id = Integer.parseInt(args[0]);
         organizationManager.removeOrganization(id);
         callback.invoke(ExecutionStatus.SUCCESS, null);

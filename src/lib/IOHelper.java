@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 
 public class IOHelper {
     /**
-     *
      * @return null if unable to read file, otherwise file content
      */
     public static String readFile(String filename) {

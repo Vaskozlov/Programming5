@@ -3,8 +3,8 @@ package commands;
 import client.Application;
 import commands.core.ClientSideCommand;
 import lib.ExecutionStatus;
-import lib.functions.CallbackFunction;
 import lib.Localization;
+import lib.functions.CallbackFunction;
 
 public class HelpCommand extends ClientSideCommand {
     public HelpCommand(CallbackFunction callbackFunction, Application application) {
@@ -12,7 +12,7 @@ public class HelpCommand extends ClientSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         callback.invoke(ExecutionStatus.SUCCESS, null, Localization.get("message.help"));
     }
 }

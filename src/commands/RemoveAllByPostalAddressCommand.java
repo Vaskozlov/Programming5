@@ -14,7 +14,7 @@ public class RemoveAllByPostalAddressCommand extends ServerAndClientSideCommand 
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) throws Exception {
+    protected void executeImplementation(String[] args, CallbackFunction callback) throws Exception {
         var organizationBuilder = new UserInteractiveOrganizationBuilder(application.getBufferedReaderWithQueueOfStreams(), false);
 
         Address address = organizationBuilder.getAddress();

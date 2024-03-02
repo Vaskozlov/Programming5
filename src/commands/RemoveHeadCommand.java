@@ -6,8 +6,6 @@ import lib.functions.CallbackFunction;
 import organization.Organization;
 import organization.OrganizationManager;
 
-import java.util.List;
-
 public class RemoveHeadCommand extends ServerSideCommand {
 
     public RemoveHeadCommand(CallbackFunction callbackFunction, OrganizationManager organizationManager) {
@@ -15,7 +13,7 @@ public class RemoveHeadCommand extends ServerSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         Organization removedOrganization = organizationManager.removeHead();
 
         callback.invoke(

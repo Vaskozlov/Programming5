@@ -4,7 +4,7 @@ import lib.ExecutionStatus;
 import lib.functions.CallbackFunction;
 
 public abstract class Command {
-    private CallbackFunction callbackFunction;
+    private final CallbackFunction callbackFunction;
 
     protected Command(CallbackFunction callback) {
         this.callbackFunction = callback;
@@ -24,11 +24,11 @@ public abstract class Command {
 
     public void execute(String[] args, CallbackFunction callback) {
         try {
-            executeThrowableCommand(args, callback);
+            executeImplementation(args, callback);
         } catch (Exception e) {
             callback.invoke(ExecutionStatus.FAILURE, e);
         }
     }
 
-    protected abstract void executeThrowableCommand(String[] args, CallbackFunction callback) throws Exception;
+    protected abstract void executeImplementation(String[] args, CallbackFunction callback) throws Exception;
 }

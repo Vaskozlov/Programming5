@@ -1,9 +1,9 @@
 package organization;
 
 import exceptions.KeyboardInterruptException;
-import lib.functions.FunctionWithArgumentAndReturnType;
-import lib.Localization;
 import lib.BufferedReaderWithQueueOfStreams;
+import lib.Localization;
+import lib.functions.FunctionWithArgumentAndReturnType;
 
 import java.io.IOException;
 import java.util.Objects;

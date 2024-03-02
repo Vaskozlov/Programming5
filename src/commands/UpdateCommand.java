@@ -7,8 +7,6 @@ import lib.ExecutionStatus;
 import lib.functions.CallbackFunction;
 import organization.OrganizationManager;
 
-import java.util.List;
-
 public class UpdateCommand extends ServerAndClientSideCommand {
 
     public UpdateCommand(CallbackFunction callbackFunction, Application application, OrganizationManager organizationManager) {
@@ -16,7 +14,7 @@ public class UpdateCommand extends ServerAndClientSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) throws Exception {
+    protected void executeImplementation(String[] args, CallbackFunction callback) throws Exception {
         int id = Integer.parseInt(args[0]);
         organizationManager.modifyOrganization(
                 id,

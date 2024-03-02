@@ -1,6 +1,10 @@
 package organization;
 
-import lib.*;
+import lib.CSV.CSVStreamLikeReader;
+import lib.CSV.CSVStreamWriter;
+import lib.PrettyStringBuilder;
+import lib.WritableToCSVStream;
+import lib.YamlConvertable;
 
 import java.io.IOException;
 

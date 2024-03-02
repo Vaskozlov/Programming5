@@ -1,4 +1,4 @@
-package lib;
+package lib.collections;
 
 import lib.functions.FunctionWithVoidReturnAndOneArgument;
 

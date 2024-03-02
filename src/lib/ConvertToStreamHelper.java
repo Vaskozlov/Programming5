@@ -1,5 +1,6 @@
 package lib;
 
+import lib.CSV.CSVStreamLikeReader;
 import lib.functions.FunctionWithArgumentAndReturnType;
 
 import java.io.IOException;

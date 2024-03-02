@@ -12,7 +12,7 @@ public class SaveCommand extends ServerSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         String filename = args[0];
         boolean isSuccessfullySaved = organizationManager.saveToFile(filename);
         callback.invoke(isSuccessfullySaved ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE, null, filename);

@@ -16,7 +16,7 @@ public class MaxByFullNameCommand extends ServerSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         Organization maxOrganization = Collections.max(organizationManager.getOrganizations(),
                 Comparator.comparing(Organization::getFullName));
 

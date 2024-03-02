@@ -1,5 +1,6 @@
 package lib;
 
+import lib.CSV.CSVStreamWriter;
 import lib.functions.FunctionWithVoidReturnOneArgumentAndError;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package lib;
+package lib.CSV;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -7,7 +7,7 @@ import java.util.Arrays;
  * Sequence of elements with an ability to read first element and append to the end
  */
 public class CSVStreamLikeReader {
-    private String[][] data;
+    private final String[][] data;
     private int lineIndex = 0;
     private int column = 0;
 
@@ -25,7 +25,7 @@ public class CSVStreamLikeReader {
     }
 
     public boolean isEndOfStream() {
-        return lineIndex  + (isEndOfLine() ? 1 : 0) >= data.length;
+        return lineIndex + (isEndOfLine() ? 1 : 0) >= data.length;
     }
 
     public int getElementLeftInLine() {

@@ -1,4 +1,4 @@
-package lib;
+package lib.CSV;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -14,8 +14,7 @@ public class CSVStreamWriter {
         this.writer = writer;
     }
 
-    public Writer getWriter()
-    {
+    public Writer getWriter() {
         return writer;
     }
 

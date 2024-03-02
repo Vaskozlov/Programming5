@@ -11,7 +11,7 @@ public class ExitCommand extends ClientSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         application.stop();
         callback.invoke(ExecutionStatus.SUCCESS, null);
     }

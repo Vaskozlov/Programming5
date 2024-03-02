@@ -11,7 +11,7 @@ public class PrintHistoryCommand extends ClientSideCommand {
     }
 
     @Override
-    protected void executeThrowableCommand(String[] args, CallbackFunction callback) {
+    protected void executeImplementation(String[] args, CallbackFunction callback) {
         callback.invoke(ExecutionStatus.SUCCESS, null, application.getCommandsHistory());
     }
 }

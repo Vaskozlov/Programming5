@@ -1,6 +1,6 @@
 package client;
 
-import lib.ImmutablePair;
+import lib.collections.ImmutablePair;
 import organization.Address;
 import organization.Coordinates;
 import organization.OrganizationType;
