@@ -1,4 +1,4 @@
-import client.Application;
+import application.Application;
 
 import java.io.IOException;
 
