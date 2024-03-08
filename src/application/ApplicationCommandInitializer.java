@@ -19,28 +19,28 @@ public class ApplicationCommandInitializer {
                         getCommandPair(
                                 "command.help",
                                 new HelpCommand(
-                                        application::helpCommandCallback,
+                                        ApplicationCallbacks::defaultPrintCallback,
                                         application
                                 )
                         ),
                         getCommandPair(
                                 "command.info",
                                 new InfoCommand(
-                                        application::infoCommandCallback,
+                                        ApplicationCallbacks::defaultPrintCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.show",
                                 new ShowCommand(
-                                        application::showCommandCallback,
+                                        (ApplicationCallbacks::defaultPrintCallback),
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.add",
                                 new AddCommand(
-                                        application::addCommandCallback,
+                                        ApplicationCallbacks::addCommandCallback,
                                         application,
                                         application.getOrganizationManager()
                                 )
@@ -48,7 +48,7 @@ public class ApplicationCommandInitializer {
                         getCommandPair(
                                 "command.update",
                                 new UpdateCommand(
-                                        application::modifyOrganizationCommandCallback,
+                                        ApplicationCallbacks::modifyOrganizationCommandCallback,
                                         application,
                                         application.getOrganizationManager()
                                 )
@@ -56,56 +56,56 @@ public class ApplicationCommandInitializer {
                         getCommandPair(
                                 "command.remove_by_id",
                                 new RemoveByIdCommand(
-                                        application::removeCommandCallback,
+                                        ApplicationCallbacks::removeCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.clear",
                                 new ClearCommand(
-                                        application::clearCommandCallback,
+                                        ApplicationCallbacks::clearCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.save",
                                 new SaveCommand(
-                                        application::saveCommandCallback,
+                                        ApplicationCallbacks::saveCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.read",
                                 new ReadCommand(
-                                        application::readCommandCallback,
+                                        ApplicationCallbacks::readCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.execute_script",
                                 new ExecuteScriptCommand(
-                                        application::executeScriptCommandCallback,
+                                        ApplicationCallbacks::executeScriptCommandCallback,
                                         application
                                 )
                         ),
                         getCommandPair(
                                 "command.exit",
                                 new ExitCommand(
-                                        application::exitCommandCallback,
+                                        ApplicationCallbacks::exitCommandCallback,
                                         application
                                 )
                         ),
                         getCommandPair(
                                 "command.remove_head",
                                 new RemoveHeadCommand(
-                                        application::removeHeadCommandCallback,
+                                        ApplicationCallbacks::removeHeadCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         ),
                         getCommandPair(
                                 "command.add_if_max",
                                 new AddIfMaxCommand(
-                                        application::addMaxCommandCallback,
+                                        ApplicationCallbacks::addMaxCommandCallback,
                                         application,
                                         application.getOrganizationManager()
                                 )
@@ -113,19 +113,19 @@ public class ApplicationCommandInitializer {
                         getCommandPair(
                                 "command.history",
                                 new PrintHistoryCommand(
-                                        application::showHistoryCommandCallback,
+                                        ApplicationCallbacks::showHistoryCommandCallback,
                                         application)
                         ),
                         getCommandPair(
                                 "command.max_by_full_name",
                                 new MaxByFullNameCommand(
-                                        application::maxByFullNameCommandCallback,
+                                        ApplicationCallbacks::maxByFullNameCommandCallback,
                                         application.getOrganizationManager())
                         ),
                         getCommandPair(
                                 "command.remove_all_by_postal_address",
                                 new RemoveAllByPostalAddressCommand(
-                                        application::removeAllByPostalAddressCommandCallback,
+                                        ApplicationCallbacks::removeAllByPostalAddressCommandCallback,
                                         application,
                                         application.getOrganizationManager()
                                 )
@@ -133,7 +133,7 @@ public class ApplicationCommandInitializer {
                         getCommandPair(
                                 "command.sum_of_annual_turnover",
                                 new SumOfAnnualTurnoverCommand(
-                                        application::sumOfAnnualTurnoverCommandCallback,
+                                        ApplicationCallbacks::sumOfAnnualTurnoverCommandCallback,
                                         application.getOrganizationManager()
                                 )
                         )

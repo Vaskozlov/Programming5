@@ -14,13 +14,14 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.SocketException;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
 public class DatabaseCommandsReceiver extends ServerWithConnectAndDisconnectCommand {
     private static final Logger logger = LogManager.getLogger(DatabaseCommandsReceiver.class);
     Map<User, OrganizationDatabase> usersDatabases = new HashMap<>();
-    Map<DatabaseCommand, ServerSideCommand> commandMap = new HashMap<>();
+    Map<DatabaseCommand, ServerSideCommand> commandMap = new EnumMap<>(DatabaseCommand.class);
 
     public DatabaseCommandsReceiver(int port) throws SocketException {
         super(port, "command");
@@ -72,11 +73,12 @@ public class DatabaseCommandsReceiver extends ServerWithConnectAndDisconnectComm
         }
     }
 
-    private void statusOnlyCallback(User user,
-                                    OrganizationManagerInterface organizationManager,
-                                    ExecutionStatus status,
-                                    Exception error,
-                                    Object... args
+    private void statusOnlyCallback(
+            User user,
+            OrganizationManagerInterface organizationManager,
+            ExecutionStatus status,
+            Exception error,
+            Object... args
     ) throws IOException {
         assert args.length == 0;
 
@@ -96,62 +98,34 @@ public class DatabaseCommandsReceiver extends ServerWithConnectAndDisconnectComm
         }
 
         DatabaseCommand command = DatabaseCommand.valueOf(getCommandFromJson(packet));
-        logger.trace("Received command {}, from {}", command, getUserFromPacket(packet));
+        User user = getUserFromPacket(packet);
+
+        logger.trace("Received command {}, from {}", command, user);
 
         commandMap.get(command).execute(
                 getUserFromPacket(packet),
                 usersDatabases.get(getUserFromPacket(packet))
         );
 
-        switch (command) {
-            case SHOW, INFO, CLEAR, MAX_BY_FULL_NAME, HISTORY, SUM_OF_ANNUAL_TURNOVER, REMOVE_HEAD:
-                commandMap.get(command).execute(
-                        getUserFromPacket(packet),
-                        usersDatabases.get(getUserFromPacket(packet))
-                );
-                break;
+        Object[] arguments = switch (command) {
+            case SHOW, INFO, CLEAR, MAX_BY_FULL_NAME, HISTORY, SUM_OF_ANNUAL_TURNOVER, REMOVE_HEAD -> new Object[]{};
 
-            case ADD, ADD_IF_MAX, UPDATE:
-                Organization organization = getOrganization(getObjectNode(packet));
-                commandMap.get(command).execute(
-                        getUserFromPacket(packet),
-                        usersDatabases.get(getUserFromPacket(packet)),
-                        new Object[]{organization}
-                );
-                break;
+            case ADD, ADD_IF_MAX, UPDATE -> new Object[]{getOrganization(getObjectNode(packet))};
 
-            case REMOVE_BY_ID:
-                Integer id = getInt(getObjectNode(packet));
-                commandMap.get(command).execute(
-                        getUserFromPacket(packet),
-                        usersDatabases.get(getUserFromPacket(packet)),
-                        new Object[]{id}
-                );
-                break;
+            case REMOVE_BY_ID -> new Object[]{getInt(getObjectNode(packet))};
 
-            case SAVE, READ:
-                String filename = getString(getObjectNode(packet));
-                commandMap.get(command).execute(
-                        getUserFromPacket(packet),
-                        usersDatabases.get(getUserFromPacket(packet)),
-                        new Object[]{filename}
-                );
-                break;
+            case SAVE, READ -> new Object[]{getString(getObjectNode(packet))};
 
-            case REMOVE_ALL_BY_POSTAL_ADDRESS:
-                Address address = getAddress(getObjectNode(packet));
+            case REMOVE_ALL_BY_POSTAL_ADDRESS -> new Object[]{getAddress(getObjectNode(packet))};
 
-                commandMap.get(command).execute(
-                        getUserFromPacket(packet),
-                        usersDatabases.get(getUserFromPacket(packet)),
-                        new Object[]{address}
-                );
+            default -> null; // can be join with the first case, but it might be used to treat null arguments as error
+        };
 
-                break;
-
-            default:
-                assert false;
-        }
+        commandMap.get(command).execute(
+                user,
+                usersDatabases.get(getUserFromPacket(packet)),
+                arguments
+        );
     }
 
     @Override
