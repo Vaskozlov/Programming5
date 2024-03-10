@@ -1,6 +1,6 @@
-package network.client;
+package network.client
 
-public enum DatabaseCommand {
+enum class DatabaseCommand {
     INFO,
     SHOW,
     ADD,
@@ -15,5 +15,7 @@ public enum DatabaseCommand {
     EXIT,
     HISTORY,
     SUM_OF_ANNUAL_TURNOVER,
-    MAX_BY_FULL_NAME
+    MAX_BY_FULL_NAME,
+    EXECUTE_SCRIPT,
+    HELP
 }

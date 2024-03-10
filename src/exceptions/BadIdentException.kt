@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class BadIdentException extends Error {
-    public BadIdentException() {
-        super();
-    }
+class BadIdentException : Error {
+    constructor() : super()
 
-    public BadIdentException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public BadIdentException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public BadIdentException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

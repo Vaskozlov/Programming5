@@ -1,94 +1,228 @@
-package application;
+package application
 
-import OrganizationDatabase.OrganizationDatabase;
-import OrganizationDatabase.OrganizationManagerInterface;
-import commands.client_side.core.Command;
-import lib.BufferedReaderWithQueueOfStreams;
-import lib.Localization;
-import lib.collections.CircledStorage;
-import lib.collections.ImmutablePair;
-import server.DatabaseCommandsReceiver;
+import commands.client_side.*
+import commands.client_side.core.Command
+import database.OrganizationDatabase
+import database.OrganizationManagerInterface
+import exceptions.*
+import kotlinx.coroutines.runBlocking
+import lib.BufferedReaderWithQueueOfStreams
+import lib.Localization
+import lib.collections.CircledStorage
+import network.client.DatabaseCommand
+import java.io.InputStreamReader
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+class Application {
+    val organizationManager: OrganizationManagerInterface = OrganizationDatabase()
+    val commandsHistory: CircledStorage<String> = CircledStorage(11)
+    val bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams = BufferedReaderWithQueueOfStreams(
+        InputStreamReader(System.`in`)
+    )
 
-public class Application {
-    private final OrganizationManagerInterface organizationDatabase = new OrganizationDatabase();
-    private final CircledStorage<String> commandsHistory = new CircledStorage<>(11);
-    private final BufferedReaderWithQueueOfStreams bufferedReaderWithQueueOfStreams =
-            new BufferedReaderWithQueueOfStreams(new InputStreamReader(System.in));
+    private var needToStop = false
+    private var localNameToDatabaseCommand: HashMap<String, DatabaseCommand> = HashMap()
+    private val commandNameToDatabaseCommand = mapOf(
+        "command.help" to DatabaseCommand.HELP,
+        "command.info" to DatabaseCommand.INFO,
+        "command.show" to DatabaseCommand.SHOW,
+        "command.add" to DatabaseCommand.ADD,
+        "command.update" to DatabaseCommand.UPDATE,
+        "command.remove_by_id" to DatabaseCommand.REMOVE_BY_ID,
+        "command.clear" to DatabaseCommand.CLEAR,
+        "command.save" to DatabaseCommand.SAVE,
+        "command.read" to DatabaseCommand.READ,
+        "command.execute_script" to DatabaseCommand.EXECUTE_SCRIPT,
+        "command.exit" to DatabaseCommand.EXIT,
+        "command.remove_head" to DatabaseCommand.REMOVE_HEAD,
+        "command.add_if_max" to DatabaseCommand.ADD_IF_MAX,
+        "command.history" to DatabaseCommand.HISTORY,
+        "command.max_by_full_name" to DatabaseCommand.MAX_BY_FULL_NAME,
+        "command.remove_all_by_postal_address" to DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS,
+        "command.sum_of_annual_turnover" to DatabaseCommand.SUM_OF_ANNUAL_TURNOVER
+    )
 
-    private boolean needToStop = false;
-    private HashMap<String, Command> commandsWithLocaleNames;
+    private val databaseCommandToExecutor: Map<DatabaseCommand, Command> = mapOf(
+        DatabaseCommand.HELP to HelpCommand(this),
+        DatabaseCommand.INFO to InfoCommand(organizationManager),
+        DatabaseCommand.SHOW to ShowCommand(organizationManager),
+        DatabaseCommand.ADD to AddCommand(this, organizationManager),
+        DatabaseCommand.UPDATE to UpdateCommand(this, organizationManager),
+        DatabaseCommand.REMOVE_BY_ID to RemoveByIdCommand(organizationManager),
+        DatabaseCommand.CLEAR to ClearCommand(organizationManager),
+        DatabaseCommand.SAVE to SaveCommand(organizationManager),
+        DatabaseCommand.READ to ReadCommand(organizationManager),
+        DatabaseCommand.EXECUTE_SCRIPT to ExecuteScriptCommand(this),
+        DatabaseCommand.EXIT to ExitCommand(this),
+        DatabaseCommand.REMOVE_HEAD to RemoveHeadCommand(organizationManager),
+        DatabaseCommand.ADD_IF_MAX to AddIfMaxCommand(this, organizationManager),
+        DatabaseCommand.HISTORY to PrintHistoryCommand(this),
+        DatabaseCommand.MAX_BY_FULL_NAME to MaxByFullNameCommand(organizationManager),
+        DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to RemoveAllByPostalAddressCommand(
+            this, organizationManager
+        ),
+        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand(organizationManager)
+    )
 
-    private final List<ImmutablePair<String, Command>> commandList = ApplicationCommandInitializer.getCommand(this);
+    private fun loadCommands() {
+        localNameToDatabaseCommand.clear()
 
-    public BufferedReaderWithQueueOfStreams getBufferedReaderWithQueueOfStreams() {
-        return bufferedReaderWithQueueOfStreams;
+        for ((key, value) in commandNameToDatabaseCommand) {
+            localNameToDatabaseCommand[Localization.get(key)] = value
+        }
     }
 
-    public CircledStorage<String> getCommandsHistory() {
-        return commandsHistory;
+    private fun localize() {
+        Localization.askUserForALanguage(bufferedReaderWithQueueOfStreams)
+        loadCommands()
     }
 
-    public OrganizationManagerInterface getOrganizationManager() {
-        return organizationDatabase;
-    }
-
-    public void start(String database) throws IOException {
+    fun start(database: String?) = runBlocking {
         if (database != null) {
-            organizationDatabase.loadFromFile(database);
+            organizationManager.loadFromFile(database)
         }
 
-        DatabaseCommandsReceiver databaseCommandsReceiver = new DatabaseCommandsReceiver(6789);
-        databaseCommandsReceiver.run();
+        //val databaseCommandsReceiver = DatabaseCommandsReceiver(6789)
+        //databaseCommandsReceiver.run()
 
-        localize();
-        printIntroductionMessage();
+        localize()
+        printIntroductionMessage()
 
         while (!needToStop) {
-            processCommand(bufferedReaderWithQueueOfStreams.readLine().strip());
+            processCommand(bufferedReaderWithQueueOfStreams.readLine().trim())
         }
     }
 
-    public void stop() {
-        needToStop = true;
+    fun stop() {
+        needToStop = true
     }
 
-    private void loadCommands() {
-        commandsWithLocaleNames = new HashMap<>();
+    private fun processCommand(command: String) {
+        val allArguments: Array<String> = command.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val commandName = allArguments[0]
+        val argument = allArguments.getOrNull(1)
+        val databaseCommand = localNameToDatabaseCommand[commandName]
 
-        for (ImmutablePair<String, Command> command : commandList) {
-            commandsWithLocaleNames.put(Localization.get(command.first()), command.second());
-        }
-    }
-
-    private void localize() throws IOException {
-        Localization.askUserForALanguage(bufferedReaderWithQueueOfStreams);
-        loadCommands();
-    }
-
-    private void processCommand(String command) {
-        String[] allArguments = command.split(" +");
-        String commandName = allArguments[0];
-        String[] args = Arrays.copyOfRange(allArguments, 1, allArguments.length);
-
-        if (commandsWithLocaleNames.containsKey(commandName)) {
-            commandsWithLocaleNames.get(commandName).execute(args);
-            addCommandToHistory(commandName);
+        if (databaseCommand != null) {
+            executeCommand(databaseCommand, argument)
         } else {
-            System.out.println(Localization.get("message.command.not_found"));
+            println(Localization.get("message.command.not_found"))
         }
     }
 
-    private static void printIntroductionMessage() {
-        System.out.println(Localization.get("message.introduction"));
+    private fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {
+        val executor = databaseCommandToExecutor[databaseCommand]
+        val result = executor!!.execute(argument)
+
+        if (result.isSuccess) {
+            val successMessage = commandSuccessMessage(databaseCommand, result.getOrNull())
+            println(successMessage)
+        } else {
+            val exception = result.exceptionOrNull()!!
+            val errorMessage = exceptionToMessage(exception)
+            println(errorMessage)
+        }
+
+        addCommandToHistory(databaseCommand.name)
     }
 
-    public void addCommandToHistory(String command) {
-        commandsHistory.add(command);
+    fun addCommandToHistory(command: String) {
+        commandsHistory.add(command)
+    }
+
+    private fun printIntroductionMessage() {
+        println(Localization.get("message.introduction"))
+    }
+
+    private fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String {
+        return when (command) {
+            DatabaseCommand.ADD, DatabaseCommand.ADD_IF_MAX ->
+                Localization.get("message.collection.add.succeed")
+
+            DatabaseCommand.REMOVE_BY_ID ->
+                Localization.get("message.organization_removed")
+
+            DatabaseCommand.REMOVE_HEAD, DatabaseCommand.MAX_BY_FULL_NAME ->
+                argument as String
+
+            DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS ->
+                Localization.get("message.organizations_by_postal_address_removed")
+
+            DatabaseCommand.UPDATE ->
+                Localization.get("message.organization_modified")
+
+            DatabaseCommand.CLEAR ->
+                Localization.get("message.collection_cleared")
+
+            DatabaseCommand.SAVE ->
+                String.format("%s %s.", Localization.get("message.collection.saved_to_file"), argument)
+
+            DatabaseCommand.READ ->
+                String.format("%s.", Localization.get("message.collection.load.succeed"))
+
+            DatabaseCommand.EXIT ->
+                Localization.get("message.exit")
+
+            DatabaseCommand.HISTORY -> {
+                val history = argument as CircledStorage<String>
+                val stringBuilder = StringBuilder()
+                history.applyFunctionOnAllElements { s: String? -> stringBuilder.append(s).append("\n") }
+                stringBuilder.toString()
+            }
+
+            DatabaseCommand.EXECUTE_SCRIPT ->
+                Localization.get("message.script_execution.started")
+
+            DatabaseCommand.INFO, DatabaseCommand.SHOW, DatabaseCommand.HELP ->
+                argument as String
+
+            DatabaseCommand.SUM_OF_ANNUAL_TURNOVER ->
+                String.format(
+                    "%s: %f.",
+                    Localization.get("message.sum_of_annual_turnover"),
+                    argument as Float?
+                )
+        }
+    }
+
+    private fun exceptionToMessage(exception: Throwable): String {
+        return when (exception) {
+            is UnableToReadFromFileException -> String.format(
+                "%s %s.",
+                Localization.get("message.collection.load.failed"),
+                exception.message!!
+            )
+
+            is UnableToWriteFromFileException -> String.format(
+                "%s %s.",
+                Localization.get("message.collection.unable_to_save_to_file"),
+                exception.message!!
+            )
+
+            is NotMaximumOrganizationException -> Localization.get(
+                "message.collection.add.max_check_failed"
+            )
+
+            is KeyboardInterruptException -> Localization.get(
+                "message.operation.canceled"
+            )
+
+            is IllegalArgumentException -> Localization.get(
+                "message.organization.modification_error"
+            )
+
+            is OrganizationAlreadyPresentedException -> Localization.get(
+                "message.organization.error.already_presented"
+            )
+
+            is OrganizationKeyError -> Localization.get(
+                "message.organization.error.key_error"
+            )
+
+            is OrganizationNotFoundException -> Localization.get(
+                "message.organization.error.not_found"
+            )
+
+            else -> Localization.get("message.command.failed")
+        }
     }
 }

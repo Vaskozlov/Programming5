@@ -1,70 +1,69 @@
-package lib.net.udp;
+package lib.net.udp
 
-import OrganizationDatabase.NetworkCode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lib.ExecutionStatus;
-import network.client.udp.ResultFrame;
-import network.client.udp.User;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.fasterxml.jackson.databind.ObjectMapper
+import database.NetworkCode
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import network.client.udp.ResultFrame
+import network.client.udp.User
+import org.apache.logging.log4j.kotlin.Logging
+import java.net.DatagramPacket
+import java.net.DatagramSocket
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
+abstract class Server protected constructor(private val port: Int) : Logging {
+    private val socket = DatagramSocket(this.port)
+    private var running = false
 
-public abstract class Server {
-    private static final Logger logger = LogManager.getLogger(Server.class);
-    private final int bufferSize = 2048;
+    protected var objectMapper: ObjectMapper = ObjectMapper()
 
-    private final DatagramSocket socket;
-    private final int port;
-    private boolean running = false;
+    suspend fun send(user: User, frame: ResultFrame, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        val json = objectMapper.writeValueAsString(frame)
+        val bytesToSend = json.toByteArray()
+        val packet = DatagramPacket(bytesToSend, bytesToSend.size, user.address, user.port)
 
-    protected ObjectMapper objectMapper = new ObjectMapper();
-
-    protected Server(int port) throws SocketException {
-        this.port = port;
-        this.socket = new DatagramSocket(this.port);
+        withContext(dispatcher) {
+            println("main runBlocking: I'm working in thread ${Thread.currentThread().threadId()}")
+            socket.send(packet)
+        }
     }
 
-    public static User getUserFromPacket(DatagramPacket packet) {
-        return new User(packet.getAddress(), packet.getPort());
+    suspend fun send(user: User, code: NetworkCode, str: String?, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        send(user, ResultFrame(code, str), dispatcher)
     }
 
-    public void send(User user, ResultFrame frame) throws IOException {
-        String json = objectMapper.writeValueAsString(frame);
-        byte[] bytesToSend = json.getBytes();
-        DatagramPacket packet = new DatagramPacket(bytesToSend, bytesToSend.length, user.address(), user.port());
-        socket.send(packet);
-    }
+    protected abstract suspend fun handlePacket(packet: DatagramPacket)
 
-    public void send(User user, NetworkCode code, String str) throws IOException {
-        send(user, new ResultFrame(code, str));
-    }
-
-    protected abstract void handlePacket(DatagramPacket packet) throws Exception;
-
-    public void run() {
-        running = true;
-        logger.trace("Server is running");
+    suspend fun run() = coroutineScope {
+        running = true
+        logger.trace("Server is running")
 
         while (running) {
-            byte[] buffer = new byte[bufferSize];
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            val buffer = ByteArray(bufferSize)
+
+            val packet = DatagramPacket(buffer, buffer.size)
 
             try {
-                socket.receive(packet);
-                handlePacket(packet);
-            } catch (Exception e) {
-                logger.error("Error while receiving packet: {}", e);
+                socket.receive(packet)
+                handlePacket(packet)
+            } catch (e: Exception) {
+                logger.error("Error while receiving packet: $e")
             }
         }
 
-        socket.close();
+        socket.close()
     }
 
-    public void stop() {
-        running = false;
+    fun stop() {
+        running = false
+    }
+
+    companion object {
+        private const val bufferSize = 2048
+
+        fun getUserFromPacket(packet: DatagramPacket): User {
+            return User(packet.address, packet.port)
+        }
     }
 }

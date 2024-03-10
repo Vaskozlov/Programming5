@@ -1,26 +1,20 @@
-package commands.client_side;
+package commands.client_side
 
-import OrganizationDatabase.Organization;
-import OrganizationDatabase.OrganizationManagerInterface;
-import commands.client_side.core.ServerSideCommand;
-import exceptions.OrganizationNotFoundException;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
+import commands.client_side.core.ServerSideCommand
+import database.Organization
+import database.OrganizationManagerInterface
+import exceptions.OrganizationNotFoundException
 
-public class MaxByFullNameCommand extends ServerSideCommand {
+class MaxByFullNameCommand(
+    organizationDatabase: OrganizationManagerInterface
+) : ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Organization> {
+        val maxOrganization = organizationDatabase.maxByFullName()
 
-    public MaxByFullNameCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) throws OrganizationNotFoundException {
-        Organization maxOrganization = organizationDatabase.maxByFullName();
-
-        if (maxOrganization != null) {
-            callback.invoke(ExecutionStatus.SUCCESS, null, maxOrganization);
-        } else {
-            callback.invoke(ExecutionStatus.FAILURE, null);
+        if (maxOrganization == null) {
+            return Result.failure(OrganizationNotFoundException())
         }
+
+        return Result.success(maxOrganization)
     }
 }

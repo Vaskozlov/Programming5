@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class InvalidOutputFormatException extends Exception {
-    public InvalidOutputFormatException() {
-        super();
-    }
+class InvalidOutputFormatException : Exception {
+    constructor() : super()
 
-    public InvalidOutputFormatException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public InvalidOutputFormatException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public InvalidOutputFormatException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

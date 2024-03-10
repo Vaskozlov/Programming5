@@ -1,6 +1,6 @@
-package OrganizationDatabase;
+package database
 
-public enum OrganizationType {
+enum class OrganizationType {
     COMMERCIAL,
     PUBLIC,
     PRIVATE_LIMITED_COMPANY,

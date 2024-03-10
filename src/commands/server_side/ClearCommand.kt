@@ -1,30 +1,16 @@
-package commands.server_side;
+package commands.server_side
 
-import OrganizationDatabase.OrganizationManagerInterface;
-import lib.ExecutionStatus;
-import network.client.udp.User;
+import database.OrganizationManagerInterface
+import network.client.udp.User
 
-public class ClearCommand extends ServerSideCommand {
-
-    public ClearCommand(ServerCallbackFunction callback) {
-        super(callback);
-    }
-
-    @Override
-    protected void executeImplementation(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            Object[] args,
-            ServerCallbackFunction callback
-    ) throws Exception {
-        assert args.length == 0;
-
-        organizationManager.clear();
-        callback.invoke(
-                user,
-                organizationManager,
-                ExecutionStatus.SUCCESS,
-                null
-        );
+class ClearCommand : ServerSideCommand {
+    override suspend fun executeImplementation(
+        user: User?,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any?
+    ): Result<Unit?> {
+        assert(argument == null)
+        organizationManager.clear()
+        return Result.success(null)
     }
 }

@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class NoBundleLoadedException extends Error {
-    public NoBundleLoadedException() {
-        super();
-    }
+class NoBundleLoadedException : Error {
+    constructor() : super()
 
-    public NoBundleLoadedException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public NoBundleLoadedException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public NoBundleLoadedException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

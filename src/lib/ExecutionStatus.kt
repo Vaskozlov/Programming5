@@ -1,6 +1,6 @@
-package lib;
+package lib
 
-public enum ExecutionStatus {
+enum class ExecutionStatus {
     SUCCESS,
     FAILURE
 }

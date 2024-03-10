@@ -1,61 +1,51 @@
-package lib;
+package lib
 
-import exceptions.BadIdentException;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import exceptions.BadIdentException
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Helps to build pretty string with different idents in thread safe way
  */
-public class PrettyStringBuilder {
-    private final StringBuffer stringBuilder = new StringBuffer();
-    private final AtomicInteger ident = new AtomicInteger(0);
-    private final AtomicInteger identSize;
-    private boolean initialized = false;
+class PrettyStringBuilder @JvmOverloads constructor(identSize: Int = 2) {
+    private val stringBuilder = StringBuffer()
+    private val ident = AtomicInteger(0)
+    private val identSize = AtomicInteger(identSize)
+    private var initialized = false
 
-    public PrettyStringBuilder() {
-        this(2);
+    override fun toString(): String {
+        return stringBuilder.toString()
     }
 
-    public PrettyStringBuilder(int identSize) {
-        this.identSize = new AtomicInteger(identSize);
-    }
-
-    @Override
-    public String toString() {
-        return stringBuilder.toString();
-    }
-
-    public void increaseIdent() {
-        ident.incrementAndGet();
+    fun increaseIdent() {
+        ident.incrementAndGet()
     }
 
     /**
      * decreases ident, if it is less than zero throws BadIdentException exception
      */
-    public void decreaseIdent() {
-        ident.decrementAndGet();
+    fun decreaseIdent() {
+        ident.decrementAndGet()
 
         if (ident.get() < 0) {
-            throw new BadIdentException("Ident must not be below zero");
+            throw BadIdentException("Ident must not be below zero")
         }
     }
 
-    public void appendLine(String line) {
-        addNewLine();
-        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(line);
+    fun appendLine(line: String?) {
+        addNewLine()
+        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(line)
     }
 
-    public void appendLine(String format, Object... objects) {
-        addNewLine();
-        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(String.format(format, objects));
+    fun appendLine(format: String?, vararg objects: Any?) {
+        addNewLine()
+        stringBuilder.append(" ".repeat(ident.get() * identSize.get())).append(String.format(format!!, *objects))
     }
 
-    private void addNewLine() {
+    private fun addNewLine() {
         if (initialized) {
-            stringBuilder.append('\n');
+            stringBuilder.append('\n')
         } else {
-            initialized = true;
+            initialized = true
         }
     }
 }

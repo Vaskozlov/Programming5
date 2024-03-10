@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class OrganizationNotFoundException extends Exception {
-    public OrganizationNotFoundException() {
-        super();
-    }
+class OrganizationNotFoundException : Exception {
+    constructor() : super()
 
-    public OrganizationNotFoundException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public OrganizationNotFoundException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public OrganizationNotFoundException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

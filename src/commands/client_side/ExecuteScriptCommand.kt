@@ -1,27 +1,22 @@
-package commands.client_side;
+package commands.client_side
 
-import application.Application;
-import commands.client_side.core.ClientSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
+import application.Application
+import commands.client_side.core.ClientSideCommand
+import exceptions.UnableToReadFromFileException
+import java.io.FileReader
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+class ExecuteScriptCommand(application: Application) :
+    ClientSideCommand(application) {
+    override fun executeImplementation(argument: Any?): Result<String> {
+        val filename = argument as String
 
-public class ExecuteScriptCommand extends ClientSideCommand {
-    public ExecuteScriptCommand(ClientCallbackFunction clientCallbackFunction, Application application) {
-        super(clientCallbackFunction, application);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) throws FileNotFoundException {
-        String filename = args[0];
-
-        try (FileReader fileReader = new FileReader(filename)) {
-            application.getBufferedReaderWithQueueOfStreams().pushStream(fileReader);
-            callback.invoke(ExecutionStatus.SUCCESS, null, filename);
-        } catch (Exception e) {
-            callback.invoke(ExecutionStatus.FAILURE, e, filename);
+        return try {
+            FileReader(filename).use { fileReader ->
+                application.bufferedReaderWithQueueOfStreams.pushStream(fileReader)
+            }
+            Result.success(filename)
+        } catch (e: Exception) {
+            Result.failure(UnableToReadFromFileException(filename));
         }
     }
 }

@@ -1,33 +1,23 @@
-package commands.client_side;
+package commands.client_side
 
-import OrganizationDatabase.Organization;
-import OrganizationDatabase.OrganizationManagerInterface;
-import application.Application;
-import application.OrganizationBuilder;
-import commands.client_side.core.ClientCallbackFunction;
-import commands.client_side.core.ServerAndClientSideCommand;
-import lib.ExecutionStatus;
+import application.Application
+import application.OrganizationBuilder
+import commands.client_side.core.ServerAndClientSideCommand
+import database.OrganizationManagerInterface
 
-public class UpdateCommand extends ServerAndClientSideCommand {
+class UpdateCommand(
+    application: Application,
+    organizationDatabase: OrganizationManagerInterface
+) : ServerAndClientSideCommand(application, organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        val organizationToUpdate = OrganizationBuilder.constructOrganization(
+            application.bufferedReaderWithQueueOfStreams,
+            true
+        )
 
-    public UpdateCommand(ClientCallbackFunction clientCallbackFunction, Application application, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, application, organizationDatabase);
-    }
+        organizationToUpdate.id = argument as Int
+        organizationDatabase.modifyOrganization(organizationToUpdate)
 
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) throws Exception {
-        int id = Integer.parseInt(args[0]);
-        Organization organizationToUpdate = OrganizationBuilder.constructOrganization(
-                application.getBufferedReaderWithQueueOfStreams(),
-                true
-        );
-
-        organizationToUpdate.setId(id);
-
-        organizationDatabase.modifyOrganization(
-                organizationToUpdate
-        );
-
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+        return Result.success(null)
     }
 }

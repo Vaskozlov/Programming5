@@ -1,26 +1,25 @@
-package application;
+package application
 
-import exceptions.KeyboardInterruptException;
-import lib.BufferedReaderWithQueueOfStreams;
-import OrganizationDatabase.Organization;
+import database.Organization
+import exceptions.KeyboardInterruptException
+import lib.BufferedReaderWithQueueOfStreams
+import java.io.IOException
+import java.time.LocalDate
 
-import java.io.IOException;
-import java.time.LocalDate;
+object OrganizationBuilder {
+    fun constructOrganization(reader: BufferedReaderWithQueueOfStreams, prototypedFromAnother: Boolean): Organization {
+        val organizationBuilder = UserInteractiveOrganizationBuilder(reader, prototypedFromAnother)
 
-public class OrganizationBuilder {
-    public static Organization constructOrganization(BufferedReaderWithQueueOfStreams reader, boolean prototypedFromAnother) throws KeyboardInterruptException, IOException {
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(reader, prototypedFromAnother);
-
-        return new Organization(
-                null,
-                organizationBuilder.getName(),
-                organizationBuilder.getCoordinates(),
-                LocalDate.now(),
-                organizationBuilder.getAnnualTurnover(),
-                organizationBuilder.getFullName(),
-                organizationBuilder.getEmployeesCount(),
-                organizationBuilder.getOrganizationType(),
-                organizationBuilder.getAddress()
-        );
+        return Organization(
+            null,
+            organizationBuilder.name,
+            organizationBuilder.coordinates,
+            LocalDate.now(),
+            organizationBuilder.annualTurnover,
+            organizationBuilder.fullName,
+            organizationBuilder.employeesCount,
+            organizationBuilder.organizationType,
+            organizationBuilder.address
+        )
     }
 }

@@ -1,18 +1,19 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.OrganizationManagerInterface
+import exceptions.UnableToWriteFromFileException
+import lib.ExecutionStatus
 
-public class SaveCommand extends ServerSideCommand {
+class SaveCommand(organizationDatabase: OrganizationManagerInterface) :
+    ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        val filename = argument as String
 
-    public SaveCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
+        if (organizationDatabase.saveToFile(filename) == ExecutionStatus.FAILURE) {
+            return Result.failure(UnableToWriteFromFileException(filename))
+        }
 
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        String filename = args[0];
-        callback.invoke(organizationDatabase.saveToFile(filename), null, filename);
+        return Result.success(null)
     }
 }

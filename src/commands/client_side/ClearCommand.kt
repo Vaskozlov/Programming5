@@ -1,19 +1,13 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.OrganizationManagerInterface
 
-public class ClearCommand extends ServerSideCommand {
-
-    public ClearCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        organizationDatabase.clear();
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+class ClearCommand(
+    organizationDatabase: OrganizationManagerInterface
+) : ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        organizationDatabase.clear()
+        return Result.success(null)
     }
 }

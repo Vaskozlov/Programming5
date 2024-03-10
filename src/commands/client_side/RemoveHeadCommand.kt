@@ -1,25 +1,20 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.Organization;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.Organization
+import database.OrganizationManagerInterface
+import exceptions.OrganizationNotFoundException
 
-public class RemoveHeadCommand extends ServerSideCommand {
+class RemoveHeadCommand(
+    organizationDatabase: OrganizationManagerInterface
+) : ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Organization> {
+        val removedOrganization = organizationDatabase.removeHead()
 
-    public RemoveHeadCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
+        if (removedOrganization == null) {
+            return Result.failure(OrganizationNotFoundException())
+        }
 
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        Organization removedOrganization = organizationDatabase.removeHead();
-
-        callback.invoke(
-                removedOrganization != null ? ExecutionStatus.SUCCESS : ExecutionStatus.FAILURE,
-                null,
-                removedOrganization
-        );
+        return Result.success(removedOrganization)
     }
 }

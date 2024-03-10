@@ -1,6 +1,5 @@
-package lib.functions;
+package lib.functions
 
-@FunctionalInterface
-public interface FunctionWithVoidReturnAndOneArgument<A> {
-    void invoke(A arg);
+fun interface FunctionWithVoidReturnAndOneArgument<A> {
+    fun invoke(arg: A)
 }

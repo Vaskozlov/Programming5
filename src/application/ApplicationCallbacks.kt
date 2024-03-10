@@ -1,178 +1,164 @@
-package application;
+package application
 
-import OrganizationDatabase.Organization;
-import lib.ExecutionStatus;
-import lib.Localization;
-import lib.collections.CircledStorage;
+import database.Organization
+import commands.client_side.core.ClientCallbackFunction
+import lib.ExecutionStatus
+import lib.Localization
+import lib.collections.CircledStorage
 
-public class ApplicationCallbacks {
-    public static void printCommandResult(ExecutionStatus status, String successMessage, String failureMessage) {
-        if (status == ExecutionStatus.SUCCESS) {
-            System.out.println(successMessage);
-        } else {
-            System.out.println(failureMessage);
-        }
+fun printCommandResult(
+    status: ExecutionStatus,
+    successMessage: String?,
+    failureMessage: String? = Localization.get("message.command.failed")
+) {
+    if (status == ExecutionStatus.SUCCESS) {
+        println(successMessage)
+    } else {
+        println(failureMessage)
     }
+}
 
-    public static void printCommandResult(ExecutionStatus status, String successMessage) {
-        printCommandResult(status, successMessage, Localization.get("message.command.failed"));
-    }
 
-    public static void exitCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+val exitCommandCallback = ClientCallbackFunction { status, _, argument ->
+    assert(argument == null)
 
-        printCommandResult(
-                status,
-                Localization.get("message.exit")
-        );
-    }
+    printCommandResult(
+        status,
+        Localization.get("message.exit")
+    )
+}
 
-    public static void defaultPrintCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof String) || error != null;
 
-        printCommandResult(
-                status,
-                (String) result[0],
-                ApplicationErrorMessages.showCommandGetErrorMessage(error)
-        );
-    }
+val defaultPrintCallback = ClientCallbackFunction { status, error, result ->
+    printCommandResult(
+        status,
+        result as String?,
+        ApplicationErrorMessages.showCommandGetErrorMessage(error)
+    )
+}
 
-    public static void clearCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+val clearCommandCallback = ClientCallbackFunction { status, _, result ->
+    printCommandResult(
+        status,
+        Localization.get("message.collection_cleared")
+    )
+}
 
-        printCommandResult(
-                status,
-                Localization.get("message.collection_cleared")
-        );
-    }
+val saveCommandCallback = ClientCallbackFunction { status, _, result ->
+    val filename = result as String?
+    printCommandResult(
+        status,
+        String.format("%s %s.", Localization.get("message.collection.saved_to_file"), filename),
+        String.format("%s %s.", Localization.get("message.collection.unable_to_save_to_file"), filename)
+    )
+}
 
-    public static void saveCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof String) || error != null;
+val readCommandCallback = ClientCallbackFunction { status, _, result ->
+    val filename = result as String?
 
-        String filename = (String) result[0];
-        printCommandResult(
-                status,
-                String.format("%s %s.", Localization.get("message.collection.saved_to_file"), filename),
-                String.format("%s %s.", Localization.get("message.collection.unable_to_save_to_file"), filename)
-        );
-    }
+    printCommandResult(
+        status,
+        String.format("%s.", Localization.get("message.collection.load.succeed")),
+        String.format("%s %s.", Localization.get("message.collection.load.failed"), filename)
+    )
+}
 
-    public static void readCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof String) || error != null;
+val addCommandCallback = ClientCallbackFunction { status, error, result ->
+    assert(result == null)
 
-        String filename = (String) result[0];
+    printCommandResult(
+        status,
+        Localization.get("message.collection.add.succeed"),
+        ApplicationErrorMessages.addCommandGetErrorMessage(error)
+    )
+}
 
-        printCommandResult(
-                status,
-                String.format("%s.", Localization.get("message.collection.load.succeed")),
-                String.format("%s %s.", Localization.get("message.collection.load.failed"), filename)
-        );
-    }
+val addMaxCommandCallback = ClientCallbackFunction { status, error, result ->
+    assert(result == null)
 
-    public static void addCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+    printCommandResult(
+        status,
+        Localization.get("message.collection.add.succeed"),
+        ApplicationErrorMessages.addMaxCommandGetErrorMessage(error)
+    )
+}
 
-        printCommandResult(
-                status,
-                Localization.get("message.collection.add.succeed"),
-                ApplicationErrorMessages.addCommandGetErrorMessage(error)
-        );
-    }
+val removeCommandCallback = ClientCallbackFunction { status, error, result ->
+    assert(result == null)
 
-    public static void addMaxCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+    printCommandResult(
+        status,
+        Localization.get("message.organization_removed"),
+        ApplicationErrorMessages.removeByIdCommandGetErrorMessage(error)
+    )
+}
 
-        printCommandResult(
-                status,
-                Localization.get("message.collection.add.succeed"),
-                ApplicationErrorMessages.addMaxCommandGetErrorMessage(error)
-        );
-    }
+val removeHeadCommandCallback = ClientCallbackFunction { status, error, result ->
+    printCommandResult(
+        status,
+        result as String?,
+        ApplicationErrorMessages.removeHeadCommandGetErrorMessage(error)
+    )
+}
 
-    public static void removeCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
 
-        printCommandResult(
-                status,
-                Localization.get("message.organization_removed"),
-                ApplicationErrorMessages.removeByIdCommandGetErrorMessage(error)
-        );
-    }
+val removeAllByPostalAddressCommandCallback = ClientCallbackFunction { status, error, result ->
+    assert(result == null)
 
-    public static void removeHeadCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof String) || error != null;
+    printCommandResult(
+        status,
+        Localization.get("message.organizations_by_postal_address_removed"),
+        ApplicationErrorMessages.removeAllByPostalAddressCommandGetErrorMessage(error)
+    )
+}
 
-        printCommandResult(
-                status,
-                (String) result[0],
-                ApplicationErrorMessages.removeHeadCommandGetErrorMessage(error)
-        );
-    }
+val modifyOrganizationCommandCallback = ClientCallbackFunction { status, error, result ->
+    assert(result == null)
 
-    public static void removeAllByPostalAddressCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+    printCommandResult(
+        status,
+        Localization.get("message.organization_modified"),
+        ApplicationErrorMessages.modifyOrganizationGetErrorMessage(error)
+    )
+}
 
-        printCommandResult(
-                status,
-                Localization.get("message.organizations_by_postal_address_removed"),
-                ApplicationErrorMessages.removeAllByPostalAddressCommandGetErrorMessage(error)
-        );
-    }
+val maxByFullNameCommandCallback = ClientCallbackFunction { status, _, result ->
+    printCommandResult(
+        status,
+        if (status == ExecutionStatus.SUCCESS) (result as Organization).toYaml() else ""
+    )
+}
 
-    public static void modifyOrganizationCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 0;
+val sumOfAnnualTurnoverCommandCallback = ClientCallbackFunction { status, _, result ->
+    printCommandResult(
+        status,
+        if (status == ExecutionStatus.SUCCESS) String.format(
+            "%s: %f.",
+            Localization.get("message.sum_of_annual_turnover"),
+            result as Float?
+        ) else ""
+    )
+}
 
-        printCommandResult(
-                status,
-                Localization.get("message.organization_modified"),
-                ApplicationErrorMessages.modifyOrganizationGetErrorMessage(error)
-        );
-    }
 
-    public static void maxByFullNameCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof Organization) || error != null;
+val executeScriptCommandCallback = ClientCallbackFunction { status, error, result ->
+    val filename = result as String
 
-        printCommandResult(
-                status,
-                status == ExecutionStatus.SUCCESS ? ((Organization) result[0]).toYaml() : ""
-        );
-    }
+    printCommandResult(
+        status,
+        Localization.get("message.script_execution.started"),
+        ApplicationErrorMessages.executeScriptCommandGetErrorMessage(error, filename)
+    )
+}
 
-    public static void sumOfAnnualTurnoverCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert (result.length == 1 && result[0] instanceof Float) || error != null;
 
-        printCommandResult(
-                status,
-                status == ExecutionStatus.SUCCESS ?
-                        String.format("%s: %f.", Localization.get("message.sum_of_annual_turnover"), (Float) result[0])
-                        : ""
-        );
-    }
+val showHistoryCommandCallback = ClientCallbackFunction { status, _, result ->
+    val history = result as CircledStorage<String>
+    val stringBuilder = StringBuilder()
+    history.applyFunctionOnAllElements { s: String? -> stringBuilder.append(s).append("\n") }
 
-    public static void executeScriptCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 1;
-        assert result[0] instanceof String;
-
-        String filename = (String) result[0];
-
-        printCommandResult(
-                status,
-                Localization.get("message.script_execution.started"),
-                ApplicationErrorMessages.executeScriptCommandGetErrorMessage(error, filename)
-        );
-    }
-
-    public static void showHistoryCommandCallback(ExecutionStatus status, Exception error, Object... result) {
-        assert result.length == 1;
-        assert result[0] instanceof CircledStorage;
-
-        CircledStorage<String> history = (CircledStorage<String>) result[0];
-        StringBuilder stringBuilder = new StringBuilder();
-        history.applyFunctionOnAllElements((String s) -> stringBuilder.append(s).append("\n"));
-
-        printCommandResult(
-                status,
-                stringBuilder.toString()
-        );
-    }
+    printCommandResult(
+        status,
+        stringBuilder.toString()
+    )
 }

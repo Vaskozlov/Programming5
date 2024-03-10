@@ -1,60 +1,31 @@
-package commands.server_side;
+package commands.server_side
 
-import OrganizationDatabase.OrganizationManagerInterface;
-import lib.ExecutionStatus;
-import network.client.udp.User;
+import database.OrganizationManagerInterface
+import network.client.udp.User
 
-public abstract class ServerSideCommand {
-    private final ServerCallbackFunction clientCallbackFunction;
-
-    protected ServerSideCommand(ServerCallbackFunction callback) {
-        this.clientCallbackFunction = callback;
+interface ServerSideCommand {
+    suspend fun execute(
+        user: User?,
+        organizationManager: OrganizationManagerInterface,
+    ): Result<Any?> {
+        return execute(user, organizationManager, null)
     }
 
-    public void execute(
-            User user,
-            OrganizationManagerInterface organizationManager
-    ) {
-        execute(user, organizationManager, new Object[]{}, clientCallbackFunction);
-    }
-
-    public void execute(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            Object[] args
-    ) {
-        execute(user, organizationManager, args, clientCallbackFunction);
-    }
-
-    public void execute(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            ServerCallbackFunction callback
-    ) {
-        execute(user, organizationManager, new String[]{}, callback);
-    }
-
-    public void execute(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            Object[] args,
-            ServerCallbackFunction callback
-    ) {
-        try {
-            executeImplementation(user, organizationManager, args, callback);
-        } catch (Exception e) {
-            try {
-                callback.invoke(user, organizationManager, ExecutionStatus.FAILURE, e);
-            } catch (Exception exception) {
-                exception.printStackTrace();
-            }
+    suspend fun execute(
+        user: User?,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any? = null
+    ): Result<Any?> {
+        return try {
+            executeImplementation(user, organizationManager, argument)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
-    protected abstract void executeImplementation(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            Object[] args,
-            ServerCallbackFunction callback
-    ) throws Exception;
+    suspend fun executeImplementation(
+        user: User?,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any?
+    ): Result<Any?>
 }

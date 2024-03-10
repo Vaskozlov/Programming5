@@ -1,8 +1,5 @@
-package lib.functions;
+package lib.functions
 
-import java.io.IOException;
-
-@FunctionalInterface
-public interface FunctionWithArgumentAndReturnType<R, A> {
-    R invoke(A arg) throws IOException;
+fun interface FunctionWithArgumentAndReturnType<R, A> {
+    fun invoke(arg: A): R
 }

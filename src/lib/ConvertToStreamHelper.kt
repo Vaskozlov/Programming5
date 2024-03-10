@@ -1,24 +1,21 @@
-package lib;
+package lib
 
-import lib.CSV.CSVStreamLikeReader;
-import lib.functions.FunctionWithArgumentAndReturnType;
+import lib.CSV.CSVStreamLikeReader
 
-import java.io.IOException;
-
-public class ConvertToStreamHelper {
+object ConvertToStreamHelper {
     /**
      * @param function, which will be invoked in case of non-null values at the beginning of the stream
      * @return null if stream contains null, otherwise calls function with stream argument
      */
-    public static <T> T convertNullableFromStream(
-            CSVStreamLikeReader stream,
-            FunctionWithArgumentAndReturnType<T, CSVStreamLikeReader> function
-    ) throws IOException {
-        if (stream.getNext().equals("null")) {
-            stream.readElem();
-            return null;
+    fun <T> convertNullableFromStream(
+        stream: CSVStreamLikeReader,
+        function: (CSVStreamLikeReader) -> T
+    ): T? {
+        if (stream.next == "null") {
+            stream.readElem()
+            return null
         } else {
-            return function.invoke(stream);
+            return function.invoke(stream)
         }
     }
 }

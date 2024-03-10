@@ -1,227 +1,216 @@
-package application;
+package application
 
-import OrganizationDatabase.Address;
-import OrganizationDatabase.Coordinates;
-import OrganizationDatabase.Location;
-import OrganizationDatabase.OrganizationType;
-import exceptions.KeyboardInterruptException;
-import lib.BufferedReaderWithQueueOfStreams;
-import lib.Localization;
-import lib.functions.FunctionWithArgumentAndReturnType;
-
-import java.io.IOException;
-import java.util.Objects;
+import database.Address
+import database.Coordinates
+import database.Location
+import database.OrganizationType
+import exceptions.KeyboardInterruptException
+import lib.BufferedReaderWithQueueOfStreams
+import lib.Localization
 
 /**
  * Reads information needed to construct Organization from the buffer
  */
-public class UserInteractiveOrganizationBuilder {
-    private final BufferedReaderWithQueueOfStreams reader;
-    private final boolean allowBlank;
+class UserInteractiveOrganizationBuilder(
+    private val reader: BufferedReaderWithQueueOfStreams,
+    private val allowBlank: Boolean
+) {
+    val name: String?
+        get() = getString(
+            Localization.get("organization_builder.input.organization_name"),
+            false
+        )
 
-    public UserInteractiveOrganizationBuilder(BufferedReaderWithQueueOfStreams reader, boolean allowBlank) {
-        this.reader = reader;
-        this.allowBlank = allowBlank;
-    }
-
-    public String getName() throws KeyboardInterruptException, IOException {
-        return getString(
-                Localization.get("organization_builder.input.organization_name"),
-                false
-        );
-    }
-
-    public Coordinates getCoordinates() throws KeyboardInterruptException, IOException {
-        Long x = getNumber(
+    val coordinates: Coordinates
+        get() {
+            val x = getNumber(
                 Localization.get("organization_builder.input.coordinate.x"),
-                false,
-                Long::parseLong
-        );
-
-        Long y = getNumber(
-                Localization.get("organization_builder.input.coordinate.y"),
-                false,
-                Long::parseLong
-        );
-
-        if (y > 464) {
-            System.out.println(Localization.get("organization_builder.input.coordinate.y.limit.message"));
-            return getCoordinates();
-        }
-
-        return new Coordinates(x, y);
-    }
-
-    public Float getAnnualTurnover() throws KeyboardInterruptException, IOException {
-        Float annualTurnover = getNumber(
-                Localization.get("organization_builder.input.annual_turnover"),
-                false,
-                Float::parseFloat
-        );
-
-        if (annualTurnover != null && annualTurnover <= 0) {
-            System.out.println(Localization.get("organization_builder.input.annual_turnover.limit.message"));
-            return getAnnualTurnover();
-        }
-
-        return annualTurnover;
-    }
-
-    public String getFullName() throws KeyboardInterruptException, IOException {
-        return getString(
-                Localization.get("organization_builder.input.full_name"),
                 false
-        );
-    }
+            ) { s -> s.toLong() }!!
 
-    public Integer getEmployeesCount() throws KeyboardInterruptException, IOException {
-        return getNumber(
-                Localization.get("organization_builder.input.employees_count"),
-                true,
-                Integer::parseInt
-        );
-    }
+            val y = getNumber(
+                Localization.get("organization_builder.input.coordinate.y"),
+                false
+            ) { s -> s.toLong() }!!
 
-    public OrganizationType getOrganizationType() throws KeyboardInterruptException, IOException {
-        System.out.printf(Localization.get("organization_builder.input.type"));
-        String line = reader.readLine();
+            if (y > 464) {
+                println(Localization.get("organization_builder.input.coordinate.y.limit.message"))
+                return coordinates
+            }
 
-        if (line.isEmpty()) {
-            return null;
+            return Coordinates(x, y)
         }
 
-        checkForExitCommand(line);
+    val annualTurnover: Float?
+        get() {
+            val result = getNumber(
+                Localization.get("organization_builder.input.annual_turnover"),
+                false
+            ) { s -> s.toFloat() }
 
-        return switch (line) {
-            case "null" -> null;
-            case "0" -> OrganizationType.COMMERCIAL;
-            case "1" -> OrganizationType.PUBLIC;
-            case "2" -> OrganizationType.PRIVATE_LIMITED_COMPANY;
-            case "3" -> OrganizationType.OPEN_JOINT_STOCK_COMPANY;
-            default -> {
-                System.out.println(Localization.get("organization_builder.input.type.invalid_input"));
-                yield getOrganizationType();
+            if (result != null && result <= 0) {
+                println(Localization.get("organization_builder.input.annual_turnover.limit.message"))
+                return annualTurnover
             }
-        };
-    }
 
-    public Address getAddress() throws KeyboardInterruptException, IOException, IllegalArgumentException {
-        String zipCode = getString(
+            return result
+        }
+
+    val fullName: String?
+        get() = getString(
+            Localization.get("organization_builder.input.full_name"),
+            false
+        )
+
+    val employeesCount: Int
+        get() = getNumber(
+            Localization.get("organization_builder.input.employees_count"),
+            true
+        ) { s -> s.toInt() }!!
+
+    val organizationType: OrganizationType?
+        get() {
+            System.out.printf(Localization.get("organization_builder.input.type"))
+            val line = reader.readLine()
+
+            if (line.isEmpty()) {
+                return null
+            }
+
+            checkForExitCommand(line)
+
+            return when (line) {
+                "null" -> null
+                "0" -> OrganizationType.COMMERCIAL
+                "1" -> OrganizationType.PUBLIC
+                "2" -> OrganizationType.PRIVATE_LIMITED_COMPANY
+                "3" -> OrganizationType.OPEN_JOINT_STOCK_COMPANY
+                else -> {
+                    println(Localization.get("organization_builder.input.type.invalid_input"))
+                    return organizationType
+                }
+            }
+        }
+
+    val address: Address?
+        get() {
+            val zipCode = getString(
                 Localization.get("organization_builder.input.zip_code"),
                 true
-        );
+            )
 
-        if (zipCode != null && zipCode.length() < 3) {
-            System.out.println(Localization.get("organization_builder.input.zip_code.limit.message"));
-            return getAddress();
-        }
+            if (zipCode != null && zipCode.length < 3) {
+                println(Localization.get("organization_builder.input.zip_code.limit.message"))
+                return address
+            }
 
-        if (zipCode == null) {
-            String answer = getString(
+            if (zipCode == null) {
+                val answer = getString(
                     Localization.get("organization_builder.input.address.possible_null"),
                     true
-            );
+                )
 
-            if (answer == null) {
-                return null;
+                if (answer == null) {
+                    return null
+                }
             }
-        }
 
-        Double x = getNumber(
+            val x = getNumber(
                 Localization.get("organization_builder.input.location.x"),
-                false,
-                Double::parseDouble
-        );
+                false
+            ) { s -> s.toDouble() }!!
 
-        Float y = getNumber(
+            val y = getNumber(
                 Localization.get("organization_builder.input.location.y"),
-                false,
-                Float::parseFloat
-        );
+                false
+            ) { s -> s.toFloat() }!!
 
-        Long z = getNumber(
+            val z = getNumber(
                 Localization.get("organization_builder.input.location.z"),
-                false,
-                Long::parseLong
-        );
+                false
+            ) { s -> s.toLong() }!!
 
-        String name = getString(
+            val name = getString(
                 Localization.get("organization_builder.input.location.name"),
                 true
-        );
+            )
 
-        return new Address(zipCode, new Location(x, y, z, name));
-    }
+            return Address(zipCode, Location(x, y, z, name))
+        }
 
-    private String getString(
-            String fieldName,
-            boolean nullable
-    ) throws KeyboardInterruptException, IOException {
-        String line = getInput(fieldName, nullable);
+    private fun getString(
+        fieldName: String,
+        nullable: Boolean
+    ): String? {
+        val line = getInput(fieldName, nullable)
 
         if (line.contains(";")) {
-            System.out.println(Localization.get("message.input.error.semicolon"));
-            return getString(fieldName, nullable);
+            println(Localization.get("message.input.error.semicolon"))
+            return getString(fieldName, nullable)
         }
 
         if (needToTakeDataFromProvidedOrganization(line) && allowBlank) {
-            return null;
+            return null
         }
 
-        checkForExitCommand(line);
+        checkForExitCommand(line)
 
         if (isNullInput(nullable, line)) {
-            return null;
+            return null
         }
 
-        return line;
+        return line
     }
 
-    private <T> T getNumber(String fieldName,
-                            boolean nullable,
-                            FunctionWithArgumentAndReturnType<T, String> function
-    ) throws KeyboardInterruptException, IOException {
-        String line = getInput(fieldName, nullable);
+    private fun <T> getNumber(
+        fieldName: String,
+        nullable: Boolean,
+        function: (String) -> T
+    ): T? {
+        val line = getInput(fieldName, nullable)
 
         if (needToTakeDataFromProvidedOrganization(line) && allowBlank) {
-            return null;
+            return null
         }
 
-        checkForExitCommand(line);
+        checkForExitCommand(line)
 
         if (isNullInput(nullable, line)) {
-            return null;
+            return null
         }
 
         try {
-            return function.invoke(line);
-        } catch (Exception exception) {
-            System.out.println(Localization.get("organization_builder.input.type.invalid_input"));
-            return getNumber(fieldName, nullable, function);
+            return function.invoke(line)
+        } catch (exception: Exception) {
+            println(Localization.get("organization_builder.input.type.invalid_input"))
+            return getNumber(fieldName, nullable, function)
         }
     }
 
-    private static boolean isNullInput(boolean nullable, String input) {
-        return nullable && (input.isEmpty() || input.equals(Localization.get("input.null")));
-    }
-
-    private static boolean needToTakeDataFromProvidedOrganization(String line) {
-        return line.isEmpty();
-    }
-
-    private String getInput(String fieldName,
-                            boolean nullable) throws IOException {
+    private fun getInput(
+        fieldName: String,
+        nullable: Boolean
+    ): String {
         System.out.printf(
-                Localization.get("organization_builder.input.get"),
-                fieldName,
-                nullable ? String.format(" (%s) ", Localization.get("input.nullable")) : ""
-        );
-        return reader.readLine();
+            Localization.get("organization_builder.input.get"),
+            fieldName,
+            if (nullable) String.format(" (%s) ", Localization.get("input.nullable")) else ""
+        )
+
+        return reader.readLine()
     }
 
-    private void checkForExitCommand(String line) throws KeyboardInterruptException {
-        if (Objects.equals(line, "exit")) {
-            throw new KeyboardInterruptException();
+    private fun checkForExitCommand(line: String?) {
+        if (line == "exit") {
+            throw KeyboardInterruptException()
         }
+    }
+
+    private fun isNullInput(nullable: Boolean, input: String): Boolean {
+        return nullable && (input.isEmpty() || input == Localization.get("input.null"))
+    }
+
+    private fun needToTakeDataFromProvidedOrganization(line: String): Boolean {
+        return line.isEmpty()
     }
 }

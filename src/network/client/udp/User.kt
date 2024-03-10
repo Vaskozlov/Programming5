@@ -1,6 +1,5 @@
-package network.client.udp;
+package network.client.udp
 
-import java.net.InetAddress;
+import java.net.InetAddress
 
-public record User(InetAddress address, int port) {
-}
+data class User(val address: InetAddress, val port: Int)

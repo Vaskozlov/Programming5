@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class KeyboardInterruptException extends Exception {
-    public KeyboardInterruptException() {
-        super();
-    }
+class KeyboardInterruptException : Exception {
+    constructor() : super()
 
-    public KeyboardInterruptException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public KeyboardInterruptException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public KeyboardInterruptException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

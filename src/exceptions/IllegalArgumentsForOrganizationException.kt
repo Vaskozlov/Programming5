@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class IllegalArgumentsForOrganizationException extends IllegalArgumentException {
-    public IllegalArgumentsForOrganizationException() {
-        super();
-    }
+class IllegalArgumentsForOrganizationException : IllegalArgumentException {
+    constructor() : super()
 
-    public IllegalArgumentsForOrganizationException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public IllegalArgumentsForOrganizationException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public IllegalArgumentsForOrganizationException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

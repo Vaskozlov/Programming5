@@ -1,143 +1,33 @@
-package application;
+package application
 
-import commands.client_side.*;
-import commands.client_side.core.Command;
-import lib.collections.ImmutablePair;
+import commands.client_side.*
+import commands.client_side.core.Command
+import lib.collections.ImmutablePair
+import network.client.DatabaseCommand
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-public class ApplicationCommandInitializer {
-    private static ImmutablePair<String, Command> getCommandPair(String localeName, Command command) {
-        return new ImmutablePair<>(localeName, command);
-    }
-
-    public static List<ImmutablePair<String, Command>> getCommand(Application application) {
-        return new ArrayList<>(
-                Arrays.asList(
-                        getCommandPair(
-                                "command.help",
-                                new HelpCommand(
-                                        ApplicationCallbacks::defaultPrintCallback,
-                                        application
-                                )
-                        ),
-                        getCommandPair(
-                                "command.info",
-                                new InfoCommand(
-                                        ApplicationCallbacks::defaultPrintCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.show",
-                                new ShowCommand(
-                                        (ApplicationCallbacks::defaultPrintCallback),
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.add",
-                                new AddCommand(
-                                        ApplicationCallbacks::addCommandCallback,
-                                        application,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.update",
-                                new UpdateCommand(
-                                        ApplicationCallbacks::modifyOrganizationCommandCallback,
-                                        application,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.remove_by_id",
-                                new RemoveByIdCommand(
-                                        ApplicationCallbacks::removeCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.clear",
-                                new ClearCommand(
-                                        ApplicationCallbacks::clearCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.save",
-                                new SaveCommand(
-                                        ApplicationCallbacks::saveCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.read",
-                                new ReadCommand(
-                                        ApplicationCallbacks::readCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.execute_script",
-                                new ExecuteScriptCommand(
-                                        ApplicationCallbacks::executeScriptCommandCallback,
-                                        application
-                                )
-                        ),
-                        getCommandPair(
-                                "command.exit",
-                                new ExitCommand(
-                                        ApplicationCallbacks::exitCommandCallback,
-                                        application
-                                )
-                        ),
-                        getCommandPair(
-                                "command.remove_head",
-                                new RemoveHeadCommand(
-                                        ApplicationCallbacks::removeHeadCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.add_if_max",
-                                new AddIfMaxCommand(
-                                        ApplicationCallbacks::addMaxCommandCallback,
-                                        application,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.history",
-                                new PrintHistoryCommand(
-                                        ApplicationCallbacks::showHistoryCommandCallback,
-                                        application)
-                        ),
-                        getCommandPair(
-                                "command.max_by_full_name",
-                                new MaxByFullNameCommand(
-                                        ApplicationCallbacks::maxByFullNameCommandCallback,
-                                        application.getOrganizationManager())
-                        ),
-                        getCommandPair(
-                                "command.remove_all_by_postal_address",
-                                new RemoveAllByPostalAddressCommand(
-                                        ApplicationCallbacks::removeAllByPostalAddressCommandCallback,
-                                        application,
-                                        application.getOrganizationManager()
-                                )
-                        ),
-                        getCommandPair(
-                                "command.sum_of_annual_turnover",
-                                new SumOfAnnualTurnoverCommand(
-                                        ApplicationCallbacks::sumOfAnnualTurnoverCommandCallback,
-                                        application.getOrganizationManager()
-                                )
-                        )
-                )
-        );
+object ApplicationCommandInitializer {
+    fun getCommand(application: Application): Map<DatabaseCommand, Command> {
+        return mapOf(
+            DatabaseCommand.HELP to HelpCommand(application),
+            DatabaseCommand.INFO to InfoCommand(application.organizationManager),
+            DatabaseCommand.SHOW to ShowCommand(application.organizationManager),
+            DatabaseCommand.ADD to AddCommand(application, application.organizationManager),
+            DatabaseCommand.UPDATE to UpdateCommand(application, application.organizationManager),
+            DatabaseCommand.REMOVE_BY_ID to RemoveByIdCommand(application.organizationManager),
+            DatabaseCommand.CLEAR to ClearCommand(application.organizationManager),
+            DatabaseCommand.SAVE to SaveCommand(application.organizationManager),
+            DatabaseCommand.READ to ReadCommand(application.organizationManager),
+            DatabaseCommand.EXECUTE_SCRIPT to ExecuteScriptCommand(application),
+            DatabaseCommand.EXIT to ExitCommand(application),
+            DatabaseCommand.REMOVE_HEAD to RemoveHeadCommand(application.organizationManager),
+            DatabaseCommand.ADD_IF_MAX to AddIfMaxCommand(application, application.organizationManager),
+            DatabaseCommand.HISTORY to PrintHistoryCommand(application),
+            DatabaseCommand.MAX_BY_FULL_NAME to MaxByFullNameCommand(application.organizationManager),
+            DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to RemoveAllByPostalAddressCommand(
+                application,
+                application.organizationManager
+            ),
+            DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand(application.organizationManager)
+        )
     }
 }

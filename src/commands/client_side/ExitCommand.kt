@@ -1,18 +1,12 @@
-package commands.client_side;
+package commands.client_side
 
-import application.Application;
-import commands.client_side.core.ClientSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
+import application.Application
+import commands.client_side.core.ClientSideCommand
 
-public class ExitCommand extends ClientSideCommand {
-    public ExitCommand(ClientCallbackFunction clientCallbackFunction, Application application) {
-        super(clientCallbackFunction, application);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        application.stop();
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+class ExitCommand(application: Application) :
+    ClientSideCommand(application) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        application.stop()
+        return Result.success(null)
     }
 }

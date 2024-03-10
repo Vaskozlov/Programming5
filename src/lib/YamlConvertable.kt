@@ -1,9 +1,9 @@
-package lib;
+package lib
 
-public interface YamlConvertable {
-    default String toYaml() {
-        return constructYaml(new PrettyStringBuilder()).toString();
+interface YamlConvertable {
+    fun toYaml(): String {
+        return constructYaml(PrettyStringBuilder()).toString()
     }
 
-    PrettyStringBuilder constructYaml(PrettyStringBuilder builder);
+    fun constructYaml(builder: PrettyStringBuilder): PrettyStringBuilder
 }

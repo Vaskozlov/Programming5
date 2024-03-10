@@ -1,18 +1,14 @@
-package commands.client_side;
+package commands.client_side
 
-import application.Application;
-import commands.client_side.core.ClientSideCommand;
-import lib.ExecutionStatus;
-import lib.Localization;
-import commands.client_side.core.ClientCallbackFunction;
+import application.Application
+import commands.client_side.core.ClientCallbackFunction
+import commands.client_side.core.ClientSideCommand
+import lib.ExecutionStatus
+import lib.Localization
 
-public class HelpCommand extends ClientSideCommand {
-    public HelpCommand(ClientCallbackFunction clientCallbackFunction, Application application) {
-        super(clientCallbackFunction, application);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        callback.invoke(ExecutionStatus.SUCCESS, null, Localization.get("message.help"));
+class HelpCommand(application: Application) :
+    ClientSideCommand( application) {
+    override fun executeImplementation(argument: Any?): Result<String> {
+        return Result.success(Localization.get("message.help"))
     }
 }

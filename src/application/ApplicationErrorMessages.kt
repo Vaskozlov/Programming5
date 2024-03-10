@@ -1,103 +1,93 @@
-package application;
+package application
 
-import exceptions.InvalidOutputFormatException;
-import exceptions.KeyboardInterruptException;
-import exceptions.OrganizationAlreadyPresentedException;
-import lib.Localization;
+import exceptions.InvalidOutputFormatException
+import exceptions.KeyboardInterruptException
+import exceptions.OrganizationAlreadyPresentedException
+import lib.Localization
+import java.io.FileNotFoundException
 
-import java.io.FileNotFoundException;
-
-public class ApplicationErrorMessages {
-    public static String addCommandGetErrorMessage(Exception error) {
-        if (error instanceof KeyboardInterruptException) {
-            return Localization.get("message.collection.add.canceled");
+object ApplicationErrorMessages {
+    fun defaultErrorHandling(error: Exception?): String? {
+        if (error is KeyboardInterruptException) {
+            return Localization.get("message.collection.add.canceled")
         }
 
-        if (error instanceof IllegalArgumentException) {
-            return Localization.get("message.collection.add.failed");
+        if (error is IllegalArgumentException) {
+            return Localization.get("message.collection.add.failed")
         }
 
-        if (error instanceof OrganizationAlreadyPresentedException) {
-            return Localization.get("message.organization.error.already_presented");
+        if (error is OrganizationAlreadyPresentedException) {
+            return Localization.get("message.organization.error.already_presented")
         }
 
-        return Localization.get("message.command.failed");
+        return null
     }
 
-    public static String addMaxCommandGetErrorMessage(Exception error) {
-        if (error instanceof KeyboardInterruptException) {
-            return Localization.get("message.collection.add.canceled");
-        }
+    fun addCommandGetErrorMessage(error: Exception?): String {
+        return defaultErrorHandling(error) ?: Localization.get("message.command.failed")
+    }
 
-        if (error instanceof IllegalArgumentException) {
-            return Localization.get("message.collection.add.failed");
-        }
-
-        if (error instanceof OrganizationAlreadyPresentedException) {
-            return Localization.get("message.organization.error.already_presented");
-        }
-
+    fun addMaxCommandGetErrorMessage(error: Exception?): String {
         if (error == null) {
-            return Localization.get("message.collection.add.max_check_failed");
+            return Localization.get("message.collection.add.max_check_failed")
         }
 
-        return Localization.get("message.command.failed");
-
+        return defaultErrorHandling(error) ?: Localization.get("message.command.failed")
     }
 
-    public static String modifyOrganizationGetErrorMessage(Exception error) {
-        if (error instanceof KeyboardInterruptException) {
-            return Localization.get("message.organization.modification_canceled");
+    fun modifyOrganizationGetErrorMessage(error: Exception?): String {
+        if (error is KeyboardInterruptException) {
+            return Localization.get("message.organization.modification_canceled")
         }
 
-        if (error instanceof IllegalArgumentException) {
-            return Localization.get("message.organization.modification_error");
+        if (error is IllegalArgumentException) {
+            return Localization.get("message.organization.modification_error")
         }
 
-        if (error instanceof OrganizationAlreadyPresentedException) {
-            return Localization.get("message.organization.error.already_presented_after_modification");
+        if (error is OrganizationAlreadyPresentedException) {
+            return Localization.get("message.organization.error.already_presented_after_modification")
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 
-    public static String removeByIdCommandGetErrorMessage(Exception error) {
-        if (error instanceof IllegalArgumentException) {
-            return Localization.get("message.organization.remove_by_id_error");
+    fun removeByIdCommandGetErrorMessage(error: Exception?): String {
+        if (error is IllegalArgumentException) {
+            return Localization.get("message.organization.remove_by_id_error")
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 
-    public static String removeHeadCommandGetErrorMessage(Exception error) {
-        if (error instanceof IllegalArgumentException) {
-            return Localization.get("message.unable_to_remove_organization");
+    fun removeHeadCommandGetErrorMessage(error: Exception?): String {
+        if (error is IllegalArgumentException) {
+            return Localization.get("message.unable_to_remove_organization")
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 
-    public static String removeAllByPostalAddressCommandGetErrorMessage(Exception error) {
-        if (error instanceof KeyboardInterruptException) {
-            return Localization.get("message.collection.remove.canceled");
+    fun removeAllByPostalAddressCommandGetErrorMessage(error: Exception?): String {
+        if (error is KeyboardInterruptException) {
+            return Localization.get("message.collection.remove.canceled")
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 
-    public static String executeScriptCommandGetErrorMessage(Exception error, String filename) {
-        if (error instanceof FileNotFoundException) {
-            return String.format(Localization.get("message.file.not_found"), filename);
+    fun executeScriptCommandGetErrorMessage(error: Exception?, filename: String?): String {
+        if (error is FileNotFoundException) {
+            return String.format(Localization.get("message.file.not_found"), filename)
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 
-    public static String showCommandGetErrorMessage(Exception error) {
-        if (error instanceof InvalidOutputFormatException) {
-            return Localization.get("message.show.unrecognizable_format");
+    fun showCommandGetErrorMessage(error: Exception?): String? {
+        if (error is InvalidOutputFormatException) {
+            return Localization.get("message.show.unrecognizable_format")
         }
 
-        return Localization.get("message.command.failed");
+        return Localization.get("message.command.failed")
     }
 }

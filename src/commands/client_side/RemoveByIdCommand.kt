@@ -1,20 +1,18 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.OrganizationManagerInterface
+import exceptions.OrganizationKeyError
+import lib.ExecutionStatus
 
-public class RemoveByIdCommand extends ServerSideCommand {
+class RemoveByIdCommand(
+    organizationDatabase: OrganizationManagerInterface
+) : ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        if (organizationDatabase.removeById(argument as Int) == ExecutionStatus.FAILURE) {
+            return Result.failure(OrganizationKeyError("$argument"))
+        }
 
-    public RemoveByIdCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) throws Exception {
-        int id = Integer.parseInt(args[0]);
-        organizationDatabase.removeById(id);
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+        return Result.success(null)
     }
 }

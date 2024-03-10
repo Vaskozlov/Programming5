@@ -1,4 +1,3 @@
-package lib.collections;
+package lib.collections
 
-public record ImmutablePair<T1, T2>(T1 first, T2 second) {
-}
+data class ImmutablePair<T1, T2>(val first: T1, val second: T2)

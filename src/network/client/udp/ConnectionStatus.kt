@@ -1,6 +1,6 @@
-package network.client.udp;
+package network.client.udp
 
-public enum ConnectionStatus {
+enum class ConnectionStatus {
     JUST_CONNECTED,
     CONNECTED,
     DISCONNECTED

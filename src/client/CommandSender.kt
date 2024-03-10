@@ -1,58 +1,52 @@
-package client;
+package client
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lib.net.udp.Client;
-import network.client.DatabaseCommand;
-import network.client.udp.Frame;
+import com.fasterxml.jackson.databind.ObjectMapper
+import lib.net.udp.Client
+import network.client.DatabaseCommand
+import network.client.udp.Frame
+import java.io.IOException
+import java.net.InetAddress
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+class CommandSender(address: InetAddress, port: Int) : Client(address, port) {
+    var objectMapper: ObjectMapper = ObjectMapper()
+    var connected: Boolean = false
 
-public class CommandSender extends Client {
-    ObjectMapper objectMapper = new ObjectMapper();
-    boolean connected = false;
+    constructor(address: String, port: Int) : this(InetAddress.getByName(address), port)
 
-    public CommandSender(String address, int port) throws SocketException, UnknownHostException {
-        this(InetAddress.getByName(address), port);
+    init {
+        objectMapper.findAndRegisterModules()
     }
 
-    public CommandSender(InetAddress address, int port) throws SocketException, UnknownHostException {
-        super(address, port);
-        objectMapper.findAndRegisterModules();
+    fun sendCommand(command: DatabaseCommand, value: Any?) {
+        connect()
+
+        val frame = Frame(command, value)
+        val json = objectMapper.writeValueAsString(frame)
+        send(json.toByteArray())
     }
 
-    public void sendCommand(DatabaseCommand command, Object object) throws IOException {
-        connect();
-
-        Frame frame = new Frame(command, object);
-        String json = objectMapper.writeValueAsString(frame);
-        send(json.getBytes());
-    }
-
-    private void connect() throws IOException {
-        record ConnectionFrame(String command) {
-        }
+    private fun connect() {
+        data class ConnectionFrame(val command: String)
 
         if (!connected) {
-            ConnectionFrame frame = new ConnectionFrame("Connect");
-            String json = objectMapper.writeValueAsString(frame);
-            send(json.getBytes());
+            val frame = ConnectionFrame("Connect")
+            val json = objectMapper.writeValueAsString(frame)
+            send(json.toByteArray())
         }
 
-        connected = true;
+        connected = true
     }
+}
 
-    public static void main(String[] args) throws IOException {
-        CommandSender sender = new CommandSender(InetAddress.getLocalHost(), 6789);
-        sender.sendCommand(DatabaseCommand.SHOW, null);
-        System.out.println(sender.receive());
 
-        sender.sendCommand(DatabaseCommand.CLEAR, null);
-        System.out.println(sender.receive());
+fun main(args: Array<String>) {
+    val sender = CommandSender(InetAddress.getLocalHost(), 6789)
+    sender.sendCommand(DatabaseCommand.SHOW, null)
+    println(sender.receive())
 
-        sender.sendCommand(DatabaseCommand.SHOW, null);
-        System.out.println(sender.receive());
-    }
+    sender.sendCommand(DatabaseCommand.CLEAR, null)
+    println(sender.receive())
+
+    sender.sendCommand(DatabaseCommand.SHOW, null)
+    println(sender.receive())
 }

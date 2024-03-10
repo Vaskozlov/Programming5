@@ -1,17 +1,12 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.OrganizationManagerInterface
 
-public class SumOfAnnualTurnoverCommand extends ServerSideCommand {
-    public SumOfAnnualTurnoverCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
-
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) {
-        callback.invoke(ExecutionStatus.SUCCESS, null, organizationDatabase.getSumOfAnnualTurnover());
+class SumOfAnnualTurnoverCommand(
+    organizationDatabase: OrganizationManagerInterface
+) : ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Float> {
+        return Result.success(organizationDatabase.sumOfAnnualTurnover)
     }
 }

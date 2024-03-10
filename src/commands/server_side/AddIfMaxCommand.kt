@@ -1,33 +1,21 @@
-package commands.server_side;
+package commands.server_side
 
-import OrganizationDatabase.Organization;
-import OrganizationDatabase.OrganizationManagerInterface;
-import network.client.udp.User;
+import database.Organization
+import database.OrganizationManagerInterface
+import exceptions.NotMaximumOrganizationException
+import lib.ExecutionStatus
+import network.client.udp.User
 
-public class AddIfMaxCommand extends ServerSideCommand {
+class AddIfMaxCommand : ServerSideCommand {
+    override suspend fun executeImplementation(
+        user: User?,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any?
+    ): Result<Unit?> {
+        if (organizationManager.addIfMax(argument as Organization) == ExecutionStatus.FAILURE) {
+            throw NotMaximumOrganizationException()
+        }
 
-    public AddIfMaxCommand(ServerCallbackFunction callback) {
-        super(callback);
-    }
-
-    @Override
-    protected void executeImplementation(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            Object[] args,
-            ServerCallbackFunction callback
-    ) throws Exception {
-        assert args.length == 1;
-        assert args[0] instanceof Organization;
-
-        Organization organization = (Organization) args[0];
-
-        // TODO: in case of failure add error to the arguments
-        callback.invoke(
-                user,
-                organizationManager,
-                organizationManager.addIfMax(organization),
-                null
-        );
+        return Result.success(null)
     }
 }

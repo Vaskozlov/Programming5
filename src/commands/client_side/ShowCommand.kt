@@ -1,27 +1,19 @@
-package commands.client_side;
+package commands.client_side
 
-import commands.client_side.core.ServerSideCommand;
-import exceptions.InvalidOutputFormatException;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.OrganizationManagerInterface;
+import commands.client_side.core.ServerSideCommand
+import database.OrganizationManagerInterface
+import exceptions.InvalidOutputFormatException
 
-public class ShowCommand extends ServerSideCommand {
+class ShowCommand(organizationDatabase: OrganizationManagerInterface) :
+    ServerSideCommand(organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<String> {
+        val mode = argument as String?
 
-    public ShowCommand(ClientCallbackFunction clientCallbackFunction, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, organizationDatabase);
-    }
-
-    @Override
-    public void executeImplementation(String[] args, ClientCallbackFunction callback) throws Exception {
-        String mode = args.length == 0 ? "yaml" : args[0].toLowerCase();
-        String result = switch (mode) {
-            case "json" -> organizationDatabase.toJson();
-            case "csv" -> organizationDatabase.toCSV();
-            case "yaml" -> organizationDatabase.toYaml();
-            default -> throw new InvalidOutputFormatException("Invalid output format");
-        };
-
-        callback.invoke(result == null ? ExecutionStatus.FAILURE : ExecutionStatus.SUCCESS, null, result);
+        return when (mode) {
+            null, "yaml" -> Result.success(organizationDatabase.toYaml())
+            "json" -> Result.success(organizationDatabase.toJson())
+            "csv" -> Result.success(organizationDatabase.toCSV())
+            else -> Result.failure(InvalidOutputFormatException())
+        }
     }
 }

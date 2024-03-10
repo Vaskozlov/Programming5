@@ -1,12 +1,7 @@
-package commands.client_side.core;
+package commands.client_side.core
 
-import application.Application;
+import application.Application
 
-public abstract class ClientSideCommand extends Command {
-    protected Application application;
-
-    protected ClientSideCommand(ClientCallbackFunction clientCallbackFunction, Application application) {
-        super(clientCallbackFunction);
-        this.application = application;
-    }
-}
+abstract class ClientSideCommand protected constructor(
+    protected var application: Application
+) : Command()

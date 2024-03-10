@@ -1,32 +1,27 @@
-package lib;
+package lib
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Creates unique ids in thread safe way
  */
-public class IdFactory {
-    private AtomicInteger currentId;
+class IdFactory constructor(value: Int = 0) {
+    private var currentId: AtomicInteger
 
-    public IdFactory() {
-        this(0);
-    }
-
-    public IdFactory(int value) {
-        this.currentId = new AtomicInteger(value);
+    init {
+        this.currentId = AtomicInteger(value)
     }
 
     /**
      * sets base value for factory
      */
-    public void setValue(int value) {
-        currentId = new AtomicInteger(value);
+    fun setValue(value: Int) {
+        currentId = AtomicInteger(value)
     }
 
     /**
      * @return unique id
      */
-    public int getNextId() {
-        return currentId.getAndIncrement();
-    }
+    val nextId: Int
+        get() = currentId.getAndIncrement()
 }

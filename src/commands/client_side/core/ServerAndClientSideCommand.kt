@@ -1,16 +1,9 @@
-package commands.client_side.core;
+package commands.client_side.core
 
-import application.Application;
-import OrganizationDatabase.OrganizationManagerInterface;
+import database.OrganizationManagerInterface
+import application.Application
 
-public abstract class ServerAndClientSideCommand extends Command {
-    protected Application application;
-    protected OrganizationManagerInterface organizationDatabase;
-
-    protected ServerAndClientSideCommand(ClientCallbackFunction clientCallbackFunction, Application application, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction);
-
-        this.application = application;
-        this.organizationDatabase = organizationDatabase;
-    }
-}
+abstract class ServerAndClientSideCommand protected constructor(
+    protected var application: Application,
+    protected var organizationDatabase: OrganizationManagerInterface
+) : Command()

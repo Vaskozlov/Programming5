@@ -1,35 +1,28 @@
-package lib.net.udp;
+package lib.net.udp
 
-import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket
+import java.net.DatagramSocket
+import java.net.InetAddress
 
-public class Client {
-    private static final int bufferSize = 2048;
+open class Client(private val address: InetAddress, private val port: Int) {
+    private val socket = DatagramSocket()
 
-    private DatagramSocket socket;
-    private InetAddress address;
-    private final int port;
+    constructor(address: String, port: Int) : this(InetAddress.getByName(address), port)
 
-    public Client(String address, int port) throws UnknownHostException, SocketException {
-        this(InetAddress.getByName(address), port);
+    fun receive(): String {
+        val buffer = ByteArray(ClientConstants.bufferSize)
+        val packet = DatagramPacket(buffer, buffer.size)
+        socket.receive(packet)
+
+        return String(buffer, 0, packet.length)
     }
 
-    public Client(InetAddress address, int port) throws SocketException {
-        this.address = address;
-        this.port = port;
-        this.socket = new DatagramSocket();
+    fun send(data: ByteArray) {
+        val packet = DatagramPacket(data, data.size, address, port)
+        socket.send(packet)
     }
 
-    public String receive() throws IOException {
-        byte[] buffer = new byte[bufferSize];
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        socket.receive(packet);
-
-        return new String(buffer, 0, packet.getLength());
-    }
-
-    public void send(byte[] data) throws IOException {
-        DatagramPacket packet = new DatagramPacket(data, data.length, address, port);
-        socket.send(packet);
+    companion object ClientConstants {
+        const val bufferSize = 2048
     }
 }

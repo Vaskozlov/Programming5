@@ -1,49 +1,51 @@
-package lib;
+package lib
 
-import exceptions.NoBundleLoadedException;
-
-import java.io.IOException;
-import java.util.Locale;
-import java.util.ResourceBundle;
+import exceptions.NoBundleLoadedException
+import java.io.IOException
+import java.util.*
 
 /**
  * Stores bundle with localized strings
  */
-public class Localization {
-    private static ResourceBundle bundle;
+object Localization {
+    private var bundle: ResourceBundle? = null
 
     /**
      * @param key for string
      * @return gets string from bundle using key
      */
-    public static String get(String key) {
+    fun get(key: String?): String {
         if (bundle == null) {
-            throw new NoBundleLoadedException("No bundle loaded");
+            throw NoBundleLoadedException("No bundle loaded")
         }
 
-        return bundle.getString(key);
+        return bundle!!.getString(key)
     }
 
-    public static void askUserForALanguage(
-            BufferedReaderWithQueueOfStreams bufferedReaderWithQueueOfStreams) throws IOException {
-        System.out.println("""
+    fun askUserForALanguage(
+        bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams
+    ) {
+        println(
+            """
                 Choose language:
                 0 en (default)
-                1 ru""");
+                1 ru
+                """.trimIndent()
+        )
 
-        String line = bufferedReaderWithQueueOfStreams.readLine();
+        val line = bufferedReaderWithQueueOfStreams.readLine()
 
-        switch (line) {
-            case "", "0", "en" -> Localization.loadBundle("localization/localization", "en");
-            case "1", "ru" -> Localization.loadBundle("localization/localization", "ru");
-            default -> {
-                System.out.println("Invalid input. Try again.");
-                askUserForALanguage(bufferedReaderWithQueueOfStreams);
+        when (line) {
+            "", "0", "en" -> loadBundle("localization/localization", "en")
+            "1", "ru" -> loadBundle("localization/localization", "ru")
+            else -> {
+                println("Invalid input. Try again.")
+                askUserForALanguage(bufferedReaderWithQueueOfStreams)
             }
         }
     }
 
-    public static void loadBundle(String filename, String locale) {
-        bundle = ResourceBundle.getBundle(filename, new Locale(locale));
+    fun loadBundle(filename: String?, locale: String?) {
+        bundle = ResourceBundle.getBundle(filename, Locale(locale))
     }
 }

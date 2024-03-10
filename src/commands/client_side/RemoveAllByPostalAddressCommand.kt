@@ -1,25 +1,22 @@
-package commands.client_side;
+package commands.client_side
 
-import application.Application;
-import commands.client_side.core.ServerAndClientSideCommand;
-import lib.ExecutionStatus;
-import commands.client_side.core.ClientCallbackFunction;
-import OrganizationDatabase.Address;
-import OrganizationDatabase.OrganizationManagerInterface;
-import application.UserInteractiveOrganizationBuilder;
+import application.*
+import commands.client_side.core.ServerAndClientSideCommand
+import database.Address
+import database.OrganizationManagerInterface
+import lib.ExecutionStatus
 
-public class RemoveAllByPostalAddressCommand extends ServerAndClientSideCommand {
-    public RemoveAllByPostalAddressCommand(ClientCallbackFunction clientCallbackFunction, Application application, OrganizationManagerInterface organizationDatabase) {
-        super(clientCallbackFunction, application, organizationDatabase);
-    }
+class RemoveAllByPostalAddressCommand(
+    application: Application,
+    organizationDatabase: OrganizationManagerInterface
+) : ServerAndClientSideCommand(application, organizationDatabase) {
+    override fun executeImplementation(argument: Any?): Result<Unit?> {
+        val organizationBuilder =
+            UserInteractiveOrganizationBuilder(application.bufferedReaderWithQueueOfStreams, false)
 
-    @Override
-    protected void executeImplementation(String[] args, ClientCallbackFunction callback) throws Exception {
-        var organizationBuilder = new UserInteractiveOrganizationBuilder(application.getBufferedReaderWithQueueOfStreams(), false);
+        val address: Address = organizationBuilder.address!!
+        organizationDatabase.removeAllByPostalAddress(address)
 
-        Address address = organizationBuilder.getAddress();
-        organizationDatabase.removeAllByPostalAddress(address);
-
-        callback.invoke(ExecutionStatus.SUCCESS, null);
+        return Result.success(null)
     }
 }

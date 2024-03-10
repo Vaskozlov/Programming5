@@ -1,19 +1,11 @@
-package exceptions;
+package exceptions
 
-public class OrganizationAlreadyPresentedException extends Exception {
-    public OrganizationAlreadyPresentedException() {
-        super();
-    }
+class OrganizationAlreadyPresentedException : Exception {
+    constructor() : super()
 
-    public OrganizationAlreadyPresentedException(String description) {
-        super(description);
-    }
+    constructor(description: String) : super(description)
 
-    public OrganizationAlreadyPresentedException(String description, Throwable cause) {
-        super(description, cause);
-    }
+    constructor(description: String, cause: Throwable) : super(description, cause)
 
-    public OrganizationAlreadyPresentedException(Throwable cause) {
-        super(cause);
-    }
+    constructor(cause: Throwable) : super(cause)
 }

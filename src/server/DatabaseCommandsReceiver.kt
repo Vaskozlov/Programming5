@@ -1,164 +1,169 @@
-package server;
+package server
 
-import OrganizationDatabase.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import commands.server_side.*;
-import lib.ExecutionStatus;
-import network.client.DatabaseCommand;
-import network.client.udp.ConnectionStatus;
-import network.client.udp.User;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.fasterxml.jackson.databind.JsonNode
+import commands.server_side.*
+import database.*
+import exceptions.NotMaximumOrganizationException
+import exceptions.OrganizationAlreadyPresentedException
+import exceptions.OrganizationNotFoundException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import network.client.DatabaseCommand
+import network.client.udp.ConnectionStatus
+import network.client.udp.User
+import org.apache.logging.log4j.kotlin.Logging
+import java.net.DatagramPacket
+import java.util.*
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.SocketException;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
+class DatabaseCommandsReceiver(port: Int) : ServerWithConnectAndDisconnectCommand(port, "command"), Logging {
+    var usersDatabases: MutableMap<User, OrganizationDatabase> = HashMap()
+    var commandMap: MutableMap<DatabaseCommand, ServerSideCommand> = EnumMap(
+        DatabaseCommand::class.java
+    )
 
-public class DatabaseCommandsReceiver extends ServerWithConnectAndDisconnectCommand {
-    private static final Logger logger = LogManager.getLogger(DatabaseCommandsReceiver.class);
-    Map<User, OrganizationDatabase> usersDatabases = new HashMap<>();
-    Map<DatabaseCommand, ServerSideCommand> commandMap = new EnumMap<>(DatabaseCommand.class);
-
-    public DatabaseCommandsReceiver(int port) throws SocketException {
-        super(port, "command");
-        objectMapper.findAndRegisterModules();
-
-        commandMap.put(DatabaseCommand.ADD, new AddCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.ADD_IF_MAX, new AddIfMaxCommand(this::addIfMaxCommandCallback));
-        commandMap.put(DatabaseCommand.SHOW, new ShowCommand(this::defaultDataSendCallback));
-        commandMap.put(DatabaseCommand.CLEAR, new ClearCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.INFO, new InfoCommand(this::defaultDataSendCallback));
-        commandMap.put(DatabaseCommand.MAX_BY_FULL_NAME, new MaxByFullNameCommand(this::defaultDataSendCallback));
-        commandMap.put(DatabaseCommand.REMOVE_HEAD, new RemoveHeadCommand(this::defaultDataSendCallback));
-        commandMap.put(DatabaseCommand.REMOVE_BY_ID, new RemoveByIdCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.SAVE, new SaveCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.READ, new ReadCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS, new RemoveAllByPostalAddressCommand(this::statusOnlyCallback));
-        commandMap.put(DatabaseCommand.UPDATE, new UpdateCommand(this::statusOnlyCallback));
+    init {
+        objectMapper.findAndRegisterModules()
+        commandMap[DatabaseCommand.ADD] = AddCommand()
+        commandMap[DatabaseCommand.ADD_IF_MAX] = AddIfMaxCommand()
+        commandMap[DatabaseCommand.SHOW] = ShowCommand()
+        commandMap[DatabaseCommand.CLEAR] = ClearCommand()
+        commandMap[DatabaseCommand.INFO] = InfoCommand()
+        commandMap[DatabaseCommand.MAX_BY_FULL_NAME] = MaxByFullNameCommand()
+        commandMap[DatabaseCommand.REMOVE_HEAD] = RemoveHeadCommand()
+        commandMap[DatabaseCommand.REMOVE_BY_ID] = RemoveByIdCommand()
+        commandMap[DatabaseCommand.SAVE] = SaveCommand()
+        commandMap[DatabaseCommand.READ] = ReadCommand()
+        commandMap[DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS] = RemoveAllByPostalAddressCommand()
+        commandMap[DatabaseCommand.UPDATE] = UpdateCommand()
+        commandMap[DatabaseCommand.EXIT] = ExitCommand()
     }
 
-    private void addIfMaxCommandCallback(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            ExecutionStatus status,
-            Exception error,
-            Object... args
-    ) throws IOException {
-        assert args.length == 0;
-
-        if (status == ExecutionStatus.FAILURE) {
-            send(user, NetworkCode.NOT_A_MAXIMUM_ORGANIZATION, null);
+    private suspend fun sendStringCallback(
+        command: DatabaseCommand,
+        user: User,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any?
+    ) {
+        val result = commandMap[command]!!.execute(user, organizationManager, argument)
+        if (result.isSuccess) {
+            send(user, NetworkCode.SUCCESS, objectMapper.writeValueAsString(result.getOrNull()))
         } else {
-            send(user, NetworkCode.SUCCESS, null);
+            send(user, NetworkCode.FAILURE, null)
         }
     }
 
-    private void defaultDataSendCallback(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            ExecutionStatus status,
-            Exception error,
-            Object... args
-    ) throws IOException {
-        assert (args.length == 1 && args[0] instanceof String) || status == ExecutionStatus.FAILURE;
+    private suspend fun statusOnlyCallback(
+        command: DatabaseCommand,
+        user: User,
+        organizationManager: OrganizationManagerInterface,
+        argument: Any?
+    ) {
+        assert(argument == null)
 
-        if (status == ExecutionStatus.FAILURE) {
-            send(user, NetworkCode.FAILURE, null);
+        println("main runBlocking: I'm working in thread ${Thread.currentThread().threadId()}")
+
+        val result = commandMap[command]!!.execute(user, organizationManager, argument)
+
+        if (result.isSuccess) {
+            send(user, NetworkCode.SUCCESS, null)
         } else {
-            send(user, NetworkCode.SUCCESS, (String) args[0]);
+            send(user, NetworkCode.FAILURE, null)
         }
     }
 
-    private void statusOnlyCallback(
-            User user,
-            OrganizationManagerInterface organizationManager,
-            ExecutionStatus status,
-            Exception error,
-            Object... args
-    ) throws IOException {
-        assert args.length == 0;
+    override suspend fun handlePacket(packet: DatagramPacket) = coroutineScope {
+        val status = handleConnectAndDisconnectCommands(packet)
 
-        if (status == ExecutionStatus.FAILURE) {
-            send(user, NetworkCode.FAILURE, null);
-        } else {
-            send(user, NetworkCode.SUCCESS, null);
-        }
-    }
-
-    @Override
-    protected void handlePacket(DatagramPacket packet) throws JsonProcessingException {
-        ConnectionStatus status = handleConnectAndDisconnectCommands(packet);
+        println("main runBlocking: I'm working in thread ${Thread.currentThread().threadId()}")
 
         if (status != ConnectionStatus.CONNECTED) {
-            return;
+            return@coroutineScope
         }
 
-        DatabaseCommand command = DatabaseCommand.valueOf(getCommandFromJson(packet));
-        User user = getUserFromPacket(packet);
+        val commandName = getCommandFromJson(packet)
+        val user: User = getUserFromPacket(packet)
+        val database: OrganizationManagerInterface = usersDatabases.get(user)!!
 
-        logger.trace("Received command {}, from {}", command, user);
+        if (!DatabaseCommand.entries.map { it.name }.contains(commandName)) {
+            send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
+            return@coroutineScope
+        }
 
-        commandMap.get(command).execute(
-                getUserFromPacket(packet),
-                usersDatabases.get(getUserFromPacket(packet))
-        );
+        val command = DatabaseCommand.valueOf(commandName)
+        logger.trace("Received command $command, from $user")
 
-        Object[] arguments = switch (command) {
-            case SHOW, INFO, CLEAR, MAX_BY_FULL_NAME, HISTORY, SUM_OF_ANNUAL_TURNOVER, REMOVE_HEAD -> new Object[]{};
+        when (command) {
+            DatabaseCommand.SHOW, DatabaseCommand.HISTORY, DatabaseCommand.INFO, DatabaseCommand.SUM_OF_ANNUAL_TURNOVER ->
+                async { sendStringCallback(command, user, database, null) }
 
-            case ADD, ADD_IF_MAX, UPDATE -> new Object[]{getOrganization(getObjectNode(packet))};
+            DatabaseCommand.ADD, DatabaseCommand.ADD_IF_MAX, DatabaseCommand.UPDATE ->
+                statusOnlyCallback(command, user, database, getOrganization(getObjectNode(packet)))
 
-            case REMOVE_BY_ID -> new Object[]{getInt(getObjectNode(packet))};
+            DatabaseCommand.REMOVE_BY_ID ->
+                statusOnlyCallback(command, user, database, getInt(getObjectNode(packet)))
 
-            case SAVE, READ -> new Object[]{getString(getObjectNode(packet))};
+            DatabaseCommand.CLEAR ->
+                statusOnlyCallback(command, user, database, null)
 
-            case REMOVE_ALL_BY_POSTAL_ADDRESS -> new Object[]{getAddress(getObjectNode(packet))};
+            DatabaseCommand.REMOVE_HEAD, DatabaseCommand.MAX_BY_FULL_NAME ->
+                sendStringCallback(command, user, database, null)
 
-            default -> null; // can be join with the first case, but it might be used to treat null arguments as error
-        };
+            DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS ->
+                statusOnlyCallback(command, user, database, getAddress(getObjectNode(packet)))
 
-        commandMap.get(command).execute(
-                user,
-                usersDatabases.get(getUserFromPacket(packet)),
-                arguments
-        );
+            DatabaseCommand.SAVE, DatabaseCommand.READ ->
+                statusOnlyCallback(command, user, database, getString(getObjectNode(packet)))
+
+            DatabaseCommand.EXIT -> {
+                statusOnlyCallback(command, user, database, getOrganization(getObjectNode(packet)))
+                handleDisconnectCommand(user)
+            }
+
+            else -> send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
+        }
     }
 
-    @Override
-    protected void handleConnectCommand(User user) {
-        OrganizationDatabase org = new OrganizationDatabase();
-        org.loadFromFile("/Users/vaskozlov/IdeaProjects/Programming5/test_database/test2.csv");
-        usersDatabases.put(user, org);
+    fun errorToNetworkCode(error: Exception): NetworkCode {
+        return when (error) {
+            is OrganizationAlreadyPresentedException -> NetworkCode.ORGANIZATION_ALREADY_EXISTS
+
+            is OrganizationNotFoundException -> NetworkCode.NOT_FOUND
+
+            is NotMaximumOrganizationException -> NetworkCode.NOT_A_MAXIMUM_ORGANIZATION
+
+            else -> NetworkCode.FAILURE
+        }
     }
 
-    @Override
-    protected void handleDisconnectCommand(User user) {
-        usersDatabases.remove(user);
+    override fun handleConnectCommand(user: User) {
+        val org = OrganizationDatabase()
+        org.loadFromFile("/Users/vaskozlov/IdeaProjects/Programming5/test_database/test2.csv")
+        usersDatabases[user] = org
     }
 
-    private Organization getOrganization(JsonNode jsonNode) throws JsonProcessingException {
-        return objectMapper.readValue(jsonNode.toString(), Organization.class);
+    override fun handleDisconnectCommand(user: User) {
+        usersDatabases.remove(user)
     }
 
-    private Address getAddress(JsonNode jsonNode) throws JsonProcessingException {
-        return objectMapper.readValue(jsonNode.toString(), Address.class);
+    private fun getOrganization(jsonNode: JsonNode): Organization {
+        return objectMapper.readValue(jsonNode.toString(), Organization::class.java)
     }
 
-    private String getString(JsonNode jsonNode) throws JsonProcessingException {
-        return objectMapper.readValue(jsonNode.toString(), String.class);
+    private fun getAddress(jsonNode: JsonNode): Address {
+        return objectMapper.readValue(jsonNode.toString(), Address::class.java)
     }
 
-    private Integer getInt(JsonNode jsonNode) throws JsonProcessingException {
-        return objectMapper.readValue(jsonNode.toString(), Integer.class);
+    private fun getString(jsonNode: JsonNode): String {
+        return objectMapper.readValue(jsonNode.toString(), String::class.java)
     }
 
-    protected JsonNode getObjectNode(DatagramPacket packet) throws JsonProcessingException {
-        String result = new String(packet.getData(), 0, packet.getLength());
-        JsonNode jsonNodeRoot = objectMapper.readTree(result);
-        return jsonNodeRoot.get("object");
+    private fun getInt(jsonNode: JsonNode): Int {
+        return objectMapper.readValue(jsonNode.toString(), Int::class.java)
+    }
+
+    protected fun getObjectNode(packet: DatagramPacket): JsonNode {
+        val result = String(packet.data, 0, packet.length)
+        val jsonNodeRoot = objectMapper.readTree(result)
+        return jsonNodeRoot["object"]
     }
 }
