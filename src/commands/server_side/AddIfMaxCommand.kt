@@ -6,7 +6,7 @@ import exceptions.NotMaximumOrganizationException
 import lib.ExecutionStatus
 import network.client.udp.User
 
-class AddIfMaxCommand : ServerSideCommand {
+class AddIfMaxCommand : ServerSideCommand() {
     override suspend fun executeImplementation(
         user: User?,
         organizationManager: OrganizationManagerInterface,

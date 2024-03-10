@@ -1,6 +1,6 @@
 package exceptions
 
-class OrganizationKeyError : Exception {
+class FileWriteException : Exception {
     constructor() : super()
 
     constructor(description: String) : super(description)

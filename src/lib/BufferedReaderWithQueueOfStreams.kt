@@ -26,7 +26,14 @@ class BufferedReaderWithQueueOfStreams {
      * Reads line from last stream, throws IOException when there are not any streams left.
      */
     fun readLine(): String {
-        val result = currentReader.readLine()
+        val result: String?
+
+        try {
+            result = currentReader.readLine()
+        } catch (e: IOException) {
+            popStream()
+            return readLine()
+        }
 
         if (result == null) {
             popStream()

@@ -2,7 +2,7 @@ package commands.client_side
 
 import commands.client_side.core.ServerSideCommand
 import database.OrganizationManagerInterface
-import exceptions.UnableToReadFromFileException
+import exceptions.FileReadException
 import lib.ExecutionStatus
 
 class ReadCommand(organizationDatabase: OrganizationManagerInterface) :
@@ -11,7 +11,7 @@ class ReadCommand(organizationDatabase: OrganizationManagerInterface) :
         val filename = argument as String
 
         if (organizationDatabase.loadFromFile(filename) == ExecutionStatus.FAILURE) {
-            return Result.failure(UnableToReadFromFileException(filename))
+            return Result.failure(FileReadException(filename))
         }
 
         return Result.success(null)

@@ -1,23 +1,14 @@
 package commands.client_side
 
-import application.Application
-import application.OrganizationBuilder
-import commands.client_side.core.ServerAndClientSideCommand
+import commands.client_side.core.ServerSideCommand
+import database.Organization
 import database.OrganizationManagerInterface
 
 class UpdateCommand(
-    application: Application,
     organizationDatabase: OrganizationManagerInterface
-) : ServerAndClientSideCommand(application, organizationDatabase) {
+) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Unit?> {
-        val organizationToUpdate = OrganizationBuilder.constructOrganization(
-            application.bufferedReaderWithQueueOfStreams,
-            true
-        )
-
-        organizationToUpdate.id = argument as Int
-        organizationDatabase.modifyOrganization(organizationToUpdate)
-
+        organizationDatabase.modifyOrganization(argument as Organization)
         return Result.success(null)
     }
 }

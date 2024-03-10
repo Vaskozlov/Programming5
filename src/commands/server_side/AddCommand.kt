@@ -4,7 +4,7 @@ import database.Organization
 import database.OrganizationManagerInterface
 import network.client.udp.User
 
-class AddCommand : ServerSideCommand {
+class AddCommand : ServerSideCommand() {
     override suspend fun executeImplementation(
         user: User?,
         organizationManager: OrganizationManagerInterface,

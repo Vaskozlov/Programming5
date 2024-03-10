@@ -1,22 +1,14 @@
 package commands.client_side
 
-import application.Application
-import application.OrganizationBuilder
-import commands.client_side.core.ServerAndClientSideCommand
+import commands.client_side.core.ServerSideCommand
+import database.Organization
 import database.OrganizationManagerInterface
 
 class AddCommand(
-    application: Application,
     organizationDatabase: OrganizationManagerInterface
-) : ServerAndClientSideCommand(application, organizationDatabase) {
+) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Unit?> {
-        organizationDatabase.add(
-            OrganizationBuilder.constructOrganization(
-                application.bufferedReaderWithQueueOfStreams,
-                false
-            )
-        )
-
+        organizationDatabase.add(argument as Organization)
         return Result.success(null);
     }
 }

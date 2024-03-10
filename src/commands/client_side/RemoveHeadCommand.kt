@@ -9,6 +9,8 @@ class RemoveHeadCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Organization> {
+        assert(argument == null)
+
         val removedOrganization = organizationDatabase.removeHead()
 
         if (removedOrganization == null) {

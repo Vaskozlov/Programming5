@@ -1,92 +1,48 @@
 package server
 
 import com.fasterxml.jackson.databind.JsonNode
-import commands.server_side.*
 import database.*
-import exceptions.NotMaximumOrganizationException
-import exceptions.OrganizationAlreadyPresentedException
-import exceptions.OrganizationNotFoundException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import exceptions.*
+import lib.json.fromJson
+import lib.json.toJson
+import lib.net.udp.JsonHolder
 import network.client.DatabaseCommand
 import network.client.udp.ConnectionStatus
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
-import java.net.DatagramPacket
-import java.util.*
 
 class DatabaseCommandsReceiver(port: Int) : ServerWithConnectAndDisconnectCommand(port, "command"), Logging {
-    var usersDatabases: MutableMap<User, OrganizationDatabase> = HashMap()
-    var commandMap: MutableMap<DatabaseCommand, ServerSideCommand> = EnumMap(
-        DatabaseCommand::class.java
-    )
+    private var usersDatabases: MutableMap<User, OrganizationDatabase> = HashMap()
 
-    init {
-        objectMapper.findAndRegisterModules()
-        commandMap[DatabaseCommand.ADD] = AddCommand()
-        commandMap[DatabaseCommand.ADD_IF_MAX] = AddIfMaxCommand()
-        commandMap[DatabaseCommand.SHOW] = ShowCommand()
-        commandMap[DatabaseCommand.CLEAR] = ClearCommand()
-        commandMap[DatabaseCommand.INFO] = InfoCommand()
-        commandMap[DatabaseCommand.MAX_BY_FULL_NAME] = MaxByFullNameCommand()
-        commandMap[DatabaseCommand.REMOVE_HEAD] = RemoveHeadCommand()
-        commandMap[DatabaseCommand.REMOVE_BY_ID] = RemoveByIdCommand()
-        commandMap[DatabaseCommand.SAVE] = SaveCommand()
-        commandMap[DatabaseCommand.READ] = ReadCommand()
-        commandMap[DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS] = RemoveAllByPostalAddressCommand()
-        commandMap[DatabaseCommand.UPDATE] = UpdateCommand()
-        commandMap[DatabaseCommand.EXIT] = ExitCommand()
-    }
-
-    private suspend fun sendStringCallback(
+    private suspend fun executeAndSendResult(
         command: DatabaseCommand,
         user: User,
         organizationManager: OrganizationManagerInterface,
         argument: Any?
     ) {
-        val result = commandMap[command]!!.execute(user, organizationManager, argument)
-        if (result.isSuccess) {
-            send(user, NetworkCode.SUCCESS, objectMapper.writeValueAsString(result.getOrNull()))
-        } else {
-            send(user, NetworkCode.FAILURE, null)
+        if (!commandMap.containsKey(command)) {
+            send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
+            return
         }
-    }
 
-    private suspend fun statusOnlyCallback(
-        command: DatabaseCommand,
-        user: User,
-        organizationManager: OrganizationManagerInterface,
-        argument: Any?
-    ) {
-        assert(argument == null)
-
-        println("main runBlocking: I'm working in thread ${Thread.currentThread().threadId()}")
-
+        @SuppressWarnings("kotlin:S6611")
         val result = commandMap[command]!!.execute(user, organizationManager, argument)
 
         if (result.isSuccess) {
-            send(user, NetworkCode.SUCCESS, null)
+            send(user, NetworkCode.SUCCESS, jsonMapper.toJson(result.getOrNull()))
         } else {
-            send(user, NetworkCode.FAILURE, null)
+            send(user, errorToNetworkCode(result.exceptionOrNull()), null)
         }
     }
 
-    override suspend fun handlePacket(packet: DatagramPacket) = coroutineScope {
-        val status = handleConnectAndDisconnectCommands(packet)
-
-        println("main runBlocking: I'm working in thread ${Thread.currentThread().threadId()}")
-
-        if (status != ConnectionStatus.CONNECTED) {
-            return@coroutineScope
-        }
-
-        val commandName = getCommandFromJson(packet)
-        val user: User = getUserFromPacket(packet)
-        val database: OrganizationManagerInterface = usersDatabases.get(user)!!
+    override suspend fun handleWhenConnected(jsonHolder: JsonHolder) {
+        val user: User = jsonHolder.user
+        val commandName = getCommandFromJson(jsonHolder)
+        val database: OrganizationManagerInterface = usersDatabases.getOrDefault(user, OrganizationDatabase())
 
         if (!DatabaseCommand.entries.map { it.name }.contains(commandName)) {
             send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
-            return@coroutineScope
+            return
         }
 
         val command = DatabaseCommand.valueOf(commandName)
@@ -94,44 +50,37 @@ class DatabaseCommandsReceiver(port: Int) : ServerWithConnectAndDisconnectComman
 
         when (command) {
             DatabaseCommand.SHOW, DatabaseCommand.HISTORY, DatabaseCommand.INFO, DatabaseCommand.SUM_OF_ANNUAL_TURNOVER ->
-                async { sendStringCallback(command, user, database, null) }
+                executeAndSendResult(command, user, database, null)
 
             DatabaseCommand.ADD, DatabaseCommand.ADD_IF_MAX, DatabaseCommand.UPDATE ->
-                statusOnlyCallback(command, user, database, getOrganization(getObjectNode(packet)))
+                executeAndSendResult(
+                    command,
+                    user,
+                    database,
+                    jsonMapper.fromJson<Organization>(getObjectNode(jsonHolder))
+                )
 
             DatabaseCommand.REMOVE_BY_ID ->
-                statusOnlyCallback(command, user, database, getInt(getObjectNode(packet)))
+                executeAndSendResult(command, user, database, jsonMapper.fromJson<Int>(getObjectNode(jsonHolder)))
 
             DatabaseCommand.CLEAR ->
-                statusOnlyCallback(command, user, database, null)
+                executeAndSendResult(command, user, database, null)
 
             DatabaseCommand.REMOVE_HEAD, DatabaseCommand.MAX_BY_FULL_NAME ->
-                sendStringCallback(command, user, database, null)
+                executeAndSendResult(command, user, database, null)
 
             DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS ->
-                statusOnlyCallback(command, user, database, getAddress(getObjectNode(packet)))
+                executeAndSendResult(command, user, database, jsonMapper.fromJson<Address>(getObjectNode(jsonHolder)))
 
             DatabaseCommand.SAVE, DatabaseCommand.READ ->
-                statusOnlyCallback(command, user, database, getString(getObjectNode(packet)))
+                executeAndSendResult(command, user, database, jsonMapper.fromJson<String>(getObjectNode(jsonHolder)))
 
             DatabaseCommand.EXIT -> {
-                statusOnlyCallback(command, user, database, getOrganization(getObjectNode(packet)))
+                executeAndSendResult(command, user, database, null)
                 handleDisconnectCommand(user)
             }
 
             else -> send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
-        }
-    }
-
-    fun errorToNetworkCode(error: Exception): NetworkCode {
-        return when (error) {
-            is OrganizationAlreadyPresentedException -> NetworkCode.ORGANIZATION_ALREADY_EXISTS
-
-            is OrganizationNotFoundException -> NetworkCode.NOT_FOUND
-
-            is NotMaximumOrganizationException -> NetworkCode.NOT_A_MAXIMUM_ORGANIZATION
-
-            else -> NetworkCode.FAILURE
         }
     }
 
@@ -145,25 +94,7 @@ class DatabaseCommandsReceiver(port: Int) : ServerWithConnectAndDisconnectComman
         usersDatabases.remove(user)
     }
 
-    private fun getOrganization(jsonNode: JsonNode): Organization {
-        return objectMapper.readValue(jsonNode.toString(), Organization::class.java)
-    }
-
-    private fun getAddress(jsonNode: JsonNode): Address {
-        return objectMapper.readValue(jsonNode.toString(), Address::class.java)
-    }
-
-    private fun getString(jsonNode: JsonNode): String {
-        return objectMapper.readValue(jsonNode.toString(), String::class.java)
-    }
-
-    private fun getInt(jsonNode: JsonNode): Int {
-        return objectMapper.readValue(jsonNode.toString(), Int::class.java)
-    }
-
-    protected fun getObjectNode(packet: DatagramPacket): JsonNode {
-        val result = String(packet.data, 0, packet.length)
-        val jsonNodeRoot = objectMapper.readTree(result)
-        return jsonNodeRoot["object"]
+    private fun getObjectNode(jsonHolder: JsonHolder): JsonNode {
+        return jsonHolder.getNode("object")
     }
 }

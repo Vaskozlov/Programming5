@@ -3,7 +3,7 @@ package commands.server_side
 import database.OrganizationManagerInterface
 import network.client.udp.User
 
-class ClearCommand : ServerSideCommand {
+class ClearCommand : ServerSideCommand() {
     override suspend fun executeImplementation(
         user: User?,
         organizationManager: OrganizationManagerInterface,

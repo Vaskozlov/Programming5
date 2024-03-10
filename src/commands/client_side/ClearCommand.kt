@@ -7,6 +7,8 @@ class ClearCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Unit?> {
+        assert(argument == null)
+
         organizationDatabase.clear()
         return Result.success(null)
     }

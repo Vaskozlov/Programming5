@@ -1,6 +1,6 @@
 package exceptions
 
-class UnableToWriteFromFileException : Exception {
+class FileReadException : Exception {
     constructor() : super()
 
     constructor(description: String) : super(description)

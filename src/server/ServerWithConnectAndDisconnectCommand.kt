@@ -1,20 +1,20 @@
 package server
 
-import lib.net.udp.Server
+import lib.net.udp.JsonHolder
 import network.client.udp.ConnectionStatus
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
-import java.net.DatagramPacket
 
 abstract class ServerWithConnectAndDisconnectCommand protected constructor(port: Int, commandFieldName: String) :
     ServerWithCommands(port, commandFieldName), Logging {
-    protected abstract fun handleConnectCommand(user: User)
 
+    protected abstract suspend fun handleWhenConnected(jsonHolder: JsonHolder)
+    protected abstract fun handleConnectCommand(user: User)
     protected abstract fun handleDisconnectCommand(user: User)
 
-    protected fun handleConnectAndDisconnectCommands(packet: DatagramPacket): ConnectionStatus {
-        val command = getCommandFromJson(packet)
-        val user: User = Server.Companion.getUserFromPacket(packet)
+    protected fun handleConnectAndDisconnectCommands(jsonHolder: JsonHolder): ConnectionStatus {
+        val command = getCommandFromJson(jsonHolder)
+        val user = jsonHolder.user
 
         return when (command) {
             "Connect" -> {
@@ -33,4 +33,11 @@ abstract class ServerWithConnectAndDisconnectCommand protected constructor(port:
         }
     }
 
+    override suspend fun handlePacket(jsonHolder: JsonHolder) {
+        val status = handleConnectAndDisconnectCommands(jsonHolder)
+
+        if (status == ConnectionStatus.CONNECTED) {
+            handleWhenConnected(jsonHolder)
+        }
+    }
 }

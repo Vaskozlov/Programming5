@@ -1,28 +1,19 @@
 package lib.net.udp
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import lib.json.toJson
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 
-open class Client(private val address: InetAddress, private val port: Int) {
-    private val socket = DatagramSocket()
-
-    constructor(address: String, port: Int) : this(InetAddress.getByName(address), port)
-
-    fun receive(): String {
-        val buffer = ByteArray(ClientConstants.bufferSize)
-        val packet = DatagramPacket(buffer, buffer.size)
-        socket.receive(packet)
-
-        return String(buffer, 0, packet.length)
+open class Client(private val address: InetAddress, private val port: Int) : CommonNetwork(DatagramSocket()) {
+    suspend fun send(data: ByteArray, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        return send(DatagramPacket(data, data.size, address, port), dispatcher)
     }
 
-    fun send(data: ByteArray) {
-        val packet = DatagramPacket(data, data.size, address, port)
-        socket.send(packet)
-    }
-
-    companion object ClientConstants {
-        const val bufferSize = 2048
+    suspend fun <T> send(value: T, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+        val json = jsonMapper.toJson(value)
+        send(json.toByteArray(), dispatcher)
     }
 }

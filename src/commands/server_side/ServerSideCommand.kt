@@ -3,14 +3,7 @@ package commands.server_side
 import database.OrganizationManagerInterface
 import network.client.udp.User
 
-interface ServerSideCommand {
-    suspend fun execute(
-        user: User?,
-        organizationManager: OrganizationManagerInterface,
-    ): Result<Any?> {
-        return execute(user, organizationManager, null)
-    }
-
+abstract class ServerSideCommand {
     suspend fun execute(
         user: User?,
         organizationManager: OrganizationManagerInterface,
@@ -23,7 +16,7 @@ interface ServerSideCommand {
         }
     }
 
-    suspend fun executeImplementation(
+    protected abstract suspend fun executeImplementation(
         user: User?,
         organizationManager: OrganizationManagerInterface,
         argument: Any?

@@ -4,7 +4,7 @@ import database.Address
 import database.OrganizationManagerInterface
 import network.client.udp.User
 
-class RemoveAllByPostalAddressCommand : ServerSideCommand {
+class RemoveAllByPostalAddressCommand : ServerSideCommand() {
     override suspend fun executeImplementation(
         user: User?,
         organizationManager: OrganizationManagerInterface,

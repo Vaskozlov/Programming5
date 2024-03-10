@@ -1,6 +1,6 @@
 package exceptions
 
-class UnableToReadFromFileException : Exception {
+class OrganizationKeyException : Exception {
     constructor() : super()
 
     constructor(description: String) : super(description)

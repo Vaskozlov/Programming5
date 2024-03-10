@@ -2,7 +2,7 @@ package commands.client_side
 
 import commands.client_side.core.ServerSideCommand
 import database.OrganizationManagerInterface
-import exceptions.OrganizationKeyError
+import exceptions.OrganizationKeyException
 import lib.ExecutionStatus
 
 class RemoveByIdCommand(
@@ -10,7 +10,7 @@ class RemoveByIdCommand(
 ) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Unit?> {
         if (organizationDatabase.removeById(argument as Int) == ExecutionStatus.FAILURE) {
-            return Result.failure(OrganizationKeyError("$argument"))
+            return Result.failure(OrganizationKeyException("$argument"))
         }
 
         return Result.success(null)

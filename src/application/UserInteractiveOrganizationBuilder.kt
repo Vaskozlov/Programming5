@@ -26,14 +26,14 @@ class UserInteractiveOrganizationBuilder(
             val x = getNumber(
                 Localization.get("organization_builder.input.coordinate.x"),
                 false
-            ) { s -> s.toLong() }!!
+            ) { s -> s.toLong() }
 
             val y = getNumber(
                 Localization.get("organization_builder.input.coordinate.y"),
                 false
-            ) { s -> s.toLong() }!!
+            ) { s -> s.toLong() }
 
-            if (y > 464) {
+            if (y != null && y > 464) {
                 println(Localization.get("organization_builder.input.coordinate.y.limit.message"))
                 return coordinates
             }
@@ -62,11 +62,11 @@ class UserInteractiveOrganizationBuilder(
             false
         )
 
-    val employeesCount: Int
+    val employeesCount: Int?
         get() = getNumber(
             Localization.get("organization_builder.input.employees_count"),
             true
-        ) { s -> s.toInt() }!!
+        ) { s -> s.toInt() }
 
     val organizationType: OrganizationType?
         get() {
@@ -118,17 +118,17 @@ class UserInteractiveOrganizationBuilder(
             val x = getNumber(
                 Localization.get("organization_builder.input.location.x"),
                 false
-            ) { s -> s.toDouble() }!!
+            ) { s -> s.toDouble() }
 
             val y = getNumber(
                 Localization.get("organization_builder.input.location.y"),
                 false
-            ) { s -> s.toFloat() }!!
+            ) { s -> s.toFloat() }
 
             val z = getNumber(
                 Localization.get("organization_builder.input.location.z"),
                 false
-            ) { s -> s.toLong() }!!
+            ) { s -> s.toLong() }
 
             val name = getString(
                 Localization.get("organization_builder.input.location.name"),

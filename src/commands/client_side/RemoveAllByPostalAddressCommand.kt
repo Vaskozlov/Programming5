@@ -1,22 +1,14 @@
 package commands.client_side
 
-import application.*
-import commands.client_side.core.ServerAndClientSideCommand
+import commands.client_side.core.ServerSideCommand
 import database.Address
 import database.OrganizationManagerInterface
-import lib.ExecutionStatus
 
 class RemoveAllByPostalAddressCommand(
-    application: Application,
     organizationDatabase: OrganizationManagerInterface
-) : ServerAndClientSideCommand(application, organizationDatabase) {
+) : ServerSideCommand(organizationDatabase) {
     override fun executeImplementation(argument: Any?): Result<Unit?> {
-        val organizationBuilder =
-            UserInteractiveOrganizationBuilder(application.bufferedReaderWithQueueOfStreams, false)
-
-        val address: Address = organizationBuilder.address!!
-        organizationDatabase.removeAllByPostalAddress(address)
-
+        organizationDatabase.removeAllByPostalAddress(argument as Address)
         return Result.success(null)
     }
 }

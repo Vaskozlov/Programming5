@@ -1,14 +1,12 @@
 package commands.client_side
 
-import application.Application
-import commands.client_side.core.ClientCallbackFunction
-import commands.client_side.core.ClientSideCommand
-import lib.ExecutionStatus
+import commands.client_side.core.Command
 import lib.Localization
 
-class HelpCommand(application: Application) :
-    ClientSideCommand( application) {
+class HelpCommand : Command() {
     override fun executeImplementation(argument: Any?): Result<String> {
+        assert(argument == null)
+
         return Result.success(Localization.get("message.help"))
     }
 }

@@ -1,9 +1,8 @@
 package application
 
+import database.Address
 import database.Organization
-import exceptions.KeyboardInterruptException
 import lib.BufferedReaderWithQueueOfStreams
-import java.io.IOException
 import java.time.LocalDate
 
 object OrganizationBuilder {
@@ -21,5 +20,10 @@ object OrganizationBuilder {
             organizationBuilder.organizationType,
             organizationBuilder.address
         )
+    }
+
+    fun constructAddress(reader: BufferedReaderWithQueueOfStreams, prototypedFromAnother: Boolean): Address? {
+        val organizationBuilder = UserInteractiveOrganizationBuilder(reader, prototypedFromAnother)
+        return organizationBuilder.address
     }
 }
