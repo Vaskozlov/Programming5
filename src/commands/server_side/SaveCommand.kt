@@ -13,7 +13,7 @@ class SaveCommand : ServerSideCommand() {
     ): Result<Unit?> {
         val filename = argument as String
 
-        if (organizationManager.saveToFile(filename) == ExecutionStatus.FAILURE) {
+        if (organizationManager.save(filename) == ExecutionStatus.FAILURE) {
             return Result.failure(FileWriteException(filename))
         }
 

@@ -12,7 +12,7 @@ open class Client(private val address: InetAddress, private val port: Int) : Com
         return send(DatagramPacket(data, data.size, address, port), dispatcher)
     }
 
-    suspend fun <T> send(value: T, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
+    suspend inline fun <reified T> send(value: T, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
         val json = jsonMapper.toJson(value)
         send(json.toByteArray(), dispatcher)
     }

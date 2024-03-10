@@ -7,11 +7,11 @@ import lib.ExecutionStatus
 
 class SaveCommand(organizationDatabase: OrganizationManagerInterface) :
     ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
-        val filename = argument as String
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
+        assert(argument == null)
 
-        if (organizationDatabase.saveToFile(filename) == ExecutionStatus.FAILURE) {
-            return Result.failure(FileWriteException(filename))
+        if (organizationDatabase.save("") == ExecutionStatus.FAILURE) {
+            return Result.failure(FileWriteException())
         }
 
         return Result.success(null)

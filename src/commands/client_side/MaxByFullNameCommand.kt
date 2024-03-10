@@ -8,7 +8,7 @@ import exceptions.OrganizationNotFoundException
 class MaxByFullNameCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Organization> {
+    override suspend fun executeImplementation(argument: Any?): Result<Organization> {
         val maxOrganization = organizationDatabase.maxByFullName()
 
         if (maxOrganization == null) {

@@ -5,7 +5,7 @@ import database.OrganizationManagerInterface
 
 class InfoCommand(organizationDatabase: OrganizationManagerInterface) :
     ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<String> {
+    override suspend fun executeImplementation(argument: Any?): Result<String> {
         return Result.success(organizationDatabase.info)
     }
 }

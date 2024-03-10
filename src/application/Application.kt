@@ -2,18 +2,15 @@ package application
 
 import commands.client_side.*
 import commands.client_side.core.Command
-import database.OrganizationDatabase
 import database.OrganizationManagerInterface
 import kotlinx.coroutines.runBlocking
 import lib.BufferedReaderWithQueueOfStreams
 import lib.Localization
 import lib.collections.CircledStorage
 import network.client.DatabaseCommand
-import server.DatabaseCommandsReceiver
 import java.io.InputStreamReader
 
-class Application {
-    val organizationManager: OrganizationManagerInterface = OrganizationDatabase()
+class Application(val organizationManager: OrganizationManagerInterface) {
     val commandsHistory: CircledStorage<String> = CircledStorage(11)
     val bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams = BufferedReaderWithQueueOfStreams(
         InputStreamReader(System.`in`)
@@ -42,6 +39,45 @@ class Application {
         DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand(organizationManager)
     )
 
+    private val argumentForCommand: Map<DatabaseCommand, (String?) -> Any?> = mapOf(
+        DatabaseCommand.HELP to { null },
+        DatabaseCommand.INFO to { null },
+        DatabaseCommand.SHOW to { null },
+        DatabaseCommand.ADD to {
+            OrganizationBuilder.constructOrganization(
+                bufferedReaderWithQueueOfStreams,
+                false
+            )
+        },
+        DatabaseCommand.UPDATE to {
+            OrganizationBuilder.constructOrganization(
+                bufferedReaderWithQueueOfStreams,
+                true
+            )
+        },
+        DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to {
+            OrganizationBuilder.constructAddress(
+                bufferedReaderWithQueueOfStreams,
+                false
+            )
+        },
+        DatabaseCommand.ADD_IF_MAX to {
+            OrganizationBuilder.constructOrganization(
+                bufferedReaderWithQueueOfStreams,
+                false
+            )
+        },
+        DatabaseCommand.REMOVE_BY_ID to { it?.toIntOrNull() },
+        DatabaseCommand.CLEAR to { null },
+        DatabaseCommand.SAVE to { null },
+        DatabaseCommand.READ to { it },
+        DatabaseCommand.EXECUTE_SCRIPT to { it },
+        DatabaseCommand.EXIT to { null },
+        DatabaseCommand.REMOVE_HEAD to { null },
+        DatabaseCommand.HISTORY to { null },
+        DatabaseCommand.MAX_BY_FULL_NAME to { null }
+    )
+
     private fun loadCommands() {
         localNameToDatabaseCommand.clear()
 
@@ -55,9 +91,9 @@ class Application {
         loadCommands()
     }
 
-    fun start(database: String?) = runBlocking {
-        if (database != null) {
-            organizationManager.loadFromFile(database)
+    fun start(databasePath: String?) = runBlocking {
+        if (databasePath != null) {
+            organizationManager.loadFromFile(databasePath)
         }
 
         localize()
@@ -65,7 +101,8 @@ class Application {
         running = true;
 
         while (running) {
-            processCommand(bufferedReaderWithQueueOfStreams.readLine().trim())
+            val line = bufferedReaderWithQueueOfStreams.readLine()
+            processCommand(line.trim())
         }
     }
 
@@ -73,8 +110,8 @@ class Application {
         running = false
     }
 
-    private fun processCommand(command: String) {
-        val allArguments: Array<String> = command.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    private suspend fun processCommand(input: String) {
+        val allArguments = splitInputIntoArguments(input)
 
         if (allArguments.isEmpty()) {
             return
@@ -84,48 +121,15 @@ class Application {
         val argument = allArguments.getOrNull(1)
         val databaseCommand = localNameToDatabaseCommand[commandName]
 
-        when (databaseCommand) {
-            DatabaseCommand.EXIT, DatabaseCommand.HELP, DatabaseCommand.INFO,
-            DatabaseCommand.HISTORY, DatabaseCommand.CLEAR, DatabaseCommand.SUM_OF_ANNUAL_TURNOVER,
-            DatabaseCommand.MAX_BY_FULL_NAME, DatabaseCommand.REMOVE_HEAD ->
-                executeCommand(databaseCommand, null);
-
-            DatabaseCommand.ADD, DatabaseCommand.ADD_IF_MAX ->
-                executeCommand(
-                    databaseCommand,
-                    OrganizationBuilder.constructOrganization(
-                        bufferedReaderWithQueueOfStreams,
-                        false
-                    )
-                )
-
-            DatabaseCommand.UPDATE -> {
-                val updatedOrganization = OrganizationBuilder.constructOrganization(
-                    bufferedReaderWithQueueOfStreams,
-                    true
-                )
-
-                updatedOrganization.id = argument?.toIntOrNull()
-                executeCommand(databaseCommand, updatedOrganization)
-            }
-
-            DatabaseCommand.REMOVE_BY_ID ->
-                executeCommand(databaseCommand, argument?.toIntOrNull())
-
-            DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS ->
-                executeCommand(
-                    databaseCommand,
-                    OrganizationBuilder.constructAddress(bufferedReaderWithQueueOfStreams, false)!!
-                )
-
-            DatabaseCommand.SAVE, DatabaseCommand.READ, DatabaseCommand.EXECUTE_SCRIPT, DatabaseCommand.SHOW ->
-                executeCommand(databaseCommand, argument)
-
-            null -> System.out.printf(Localization.get("message.command.not_found"), commandName)
+        if (databaseCommand == null) {
+            System.out.printf(Localization.get("message.command.not_found"), commandName)
+            return
         }
+
+        executeCommand(databaseCommand, argumentForCommand[databaseCommand]!!.invoke(argument))
     }
 
-    private fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {
+    private suspend fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {
         val executor = databaseCommandToExecutor[databaseCommand]
         val result = executor!!.execute(argument)
 

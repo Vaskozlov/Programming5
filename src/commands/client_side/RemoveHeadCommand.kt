@@ -8,7 +8,7 @@ import exceptions.OrganizationNotFoundException
 class RemoveHeadCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Organization> {
+    override suspend fun executeImplementation(argument: Any?): Result<Organization> {
         assert(argument == null)
 
         val removedOrganization = organizationDatabase.removeHead()

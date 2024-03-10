@@ -7,7 +7,7 @@ import lib.ExecutionStatus
 
 class ReadCommand(organizationDatabase: OrganizationManagerInterface) :
     ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         val filename = argument as String
 
         if (organizationDatabase.loadFromFile(filename) == ExecutionStatus.FAILURE) {

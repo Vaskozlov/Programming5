@@ -4,6 +4,7 @@ import exceptions.*
 import lib.Localization
 import lib.collections.CircledStorage
 import network.client.DatabaseCommand
+import java.io.IOException
 
 val commandNameToDatabaseCommand = mapOf(
     "command.help" to DatabaseCommand.HELP,
@@ -46,7 +47,7 @@ fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String {
             Localization.get("message.collection_cleared")
 
         DatabaseCommand.SAVE ->
-            String.format("%s %s.", Localization.get("message.collection.saved_to_file"), argument)
+            Localization.get("message.collection.saved_to_file")
 
         DatabaseCommand.READ ->
             String.format("%s.", Localization.get("message.collection.load.succeed"))
@@ -114,6 +115,15 @@ fun exceptionToMessage(exception: Throwable): String {
             "message.organization.error.not_found"
         )
 
+        is IOException -> Localization.get(
+            "message.network.error"
+        )
+
         else -> Localization.get("message.command.failed")
     }
+}
+
+fun splitInputIntoArguments(input: String): Array<String>
+{
+    return input.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 }

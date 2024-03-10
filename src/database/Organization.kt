@@ -117,7 +117,7 @@ data class Organization(
         return fullName!!.compareTo(other.fullName!!)
     }
 
-    fun checkCorrectness(): Organization.ValidationResult {
+    private fun checkCorrectness(): Organization.ValidationResult {
         if (name!!.isEmpty()) {
             return Organization.ValidationResult("Name must not be empty")
         }

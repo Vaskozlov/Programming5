@@ -4,7 +4,7 @@ import commands.client_side.core.Command
 import lib.Localization
 
 class HelpCommand : Command() {
-    override fun executeImplementation(argument: Any?): Result<String> {
+    override suspend fun executeImplementation(argument: Any?): Result<String> {
         assert(argument == null)
 
         return Result.success(Localization.get("message.help"))

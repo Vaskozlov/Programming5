@@ -7,7 +7,7 @@ import database.OrganizationManagerInterface
 class RemoveAllByPostalAddressCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         organizationDatabase.removeAllByPostalAddress(argument as Address)
         return Result.success(null)
     }

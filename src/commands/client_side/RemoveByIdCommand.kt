@@ -8,7 +8,7 @@ import lib.ExecutionStatus
 class RemoveByIdCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         if (organizationDatabase.removeById(argument as Int) == ExecutionStatus.FAILURE) {
             return Result.failure(OrganizationKeyException("$argument"))
         }

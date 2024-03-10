@@ -7,7 +7,7 @@ import java.io.FileReader
 
 class ExecuteScriptCommand(application: Application) :
     ClientSideCommand(application) {
-    override fun executeImplementation(argument: Any?): Result<String> {
+    override suspend fun executeImplementation(argument: Any?): Result<String> {
         val filename = argument as String
 
         return try {

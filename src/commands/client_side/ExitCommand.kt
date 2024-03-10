@@ -5,7 +5,7 @@ import commands.client_side.core.ClientSideCommand
 
 class ExitCommand(application: Application) :
     ClientSideCommand(application) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         assert(argument == null)
 
         application.stop()

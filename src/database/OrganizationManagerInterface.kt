@@ -7,31 +7,31 @@ interface OrganizationManagerInterface {
 
     val sumOfAnnualTurnover: Float
 
-    fun maxByFullName(): Organization?
+    suspend fun maxByFullName(): Organization?
 
-    fun add(organization: Organization)
+    suspend fun add(organization: Organization)
 
-    fun add(vararg newOrganizations: Organization)
+    suspend fun add(vararg newOrganizations: Organization)
 
-    fun addIfMax(newOrganization: Organization): ExecutionStatus
+    suspend fun addIfMax(newOrganization: Organization): ExecutionStatus
 
-    fun modifyOrganization(updatedOrganization: Organization)
+    suspend fun modifyOrganization(updatedOrganization: Organization)
 
-    fun removeById(id: Int) : ExecutionStatus
+    suspend fun removeById(id: Int) : ExecutionStatus
 
-    fun removeAllByPostalAddress(address: Address)
+    suspend fun removeAllByPostalAddress(address: Address)
 
-    fun removeHead(): Organization?
+    suspend fun removeHead(): Organization?
 
-    fun clear()
+    suspend fun clear()
 
-    fun saveToFile(path: String): ExecutionStatus
+    suspend fun save(path: String): ExecutionStatus
 
-    fun loadFromFile(path: String): ExecutionStatus
+    suspend fun loadFromFile(path: String): ExecutionStatus
 
-    fun toYaml(): String
+    suspend fun toYaml(): String
 
-    fun toJson(): String
+    suspend fun toJson(): String
 
-    fun toCSV(): String
+    suspend fun toCSV(): String
 }

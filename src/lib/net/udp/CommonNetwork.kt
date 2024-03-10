@@ -10,6 +10,10 @@ import java.net.DatagramSocket
 open class CommonNetwork(private val socket: DatagramSocket, val jsonMapper: JsonMapper = JsonMapper()) {
     constructor(port: Int, jsonMapper: JsonMapper = JsonMapper()) : this(DatagramSocket(port), jsonMapper)
 
+    fun setTimeout(timeout: Int) {
+        socket.soTimeout = timeout
+    }
+
     suspend fun send(packet: DatagramPacket, dispatcher: CoroutineDispatcher = Dispatchers.IO) {
         withContext(dispatcher) {
             socket.send(packet)
@@ -28,6 +32,11 @@ open class CommonNetwork(private val socket: DatagramSocket, val jsonMapper: Jso
         val buffer = ByteArray(bufferSize)
         val packet = DatagramPacket(buffer, buffer.size)
         return receive(packet, dispatcher)
+    }
+
+    suspend fun receiveJson(dispatcher: CoroutineDispatcher = Dispatchers.IO): JsonHolder {
+        val packet = receive(dispatcher)
+        return packet.constructJsonHolder(jsonMapper.objectMapper)
     }
 
     fun close() {

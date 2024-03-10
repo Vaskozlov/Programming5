@@ -8,12 +8,13 @@ import lib.json.toJson
 import network.client.udp.ResultFrame
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
+import org.apache.logging.log4j.kotlin.logger
 import java.net.DatagramPacket
 
 abstract class Server protected constructor(port: Int) : Logging, CommonNetwork(port) {
     private var running = false
 
-    protected abstract suspend fun handlePacket(jsonHolder: JsonHolder)
+    protected abstract suspend fun handlePacket(user: User, jsonHolder: JsonHolder)
 
     private suspend fun send(
         user: User,
@@ -27,18 +28,18 @@ abstract class Server protected constructor(port: Int) : Logging, CommonNetwork(
         send(packet, dispatcher)
     }
 
-    protected suspend fun send(
+    protected suspend fun <T> send(
         user: User,
         code: NetworkCode,
-        str: String?,
+        value: T?,
         dispatcher: CoroutineDispatcher = Dispatchers.IO
     ) {
-        send(user, ResultFrame(code, str), dispatcher)
+        send(user, ResultFrame(code, value), dispatcher)
     }
 
     suspend fun run() = coroutineScope {
         running = true
-        logger.trace("Server is running")
+        logger.info("Server is running")
 
         while (running) {
             loopCycle();
@@ -53,7 +54,7 @@ abstract class Server protected constructor(port: Int) : Logging, CommonNetwork(
 
         try {
             receive(packet)
-            handlePacket(packet.constructJsonHolder(jsonMapper.objectMapper))
+            handlePacket(packet.constructUser(), packet.constructJsonHolder(jsonMapper.objectMapper))
         } catch (e: Exception) {
             logger.error("Error while receiving packet: $e")
         }

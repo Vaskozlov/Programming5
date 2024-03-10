@@ -4,25 +4,31 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import exceptions.OrganizationAlreadyPresentedException
-import exceptions.OrganizationNotFoundException
+import kotlinx.coroutines.runBlocking
 import lib.*
 import lib.CSV.CSVStreamLikeReader
 import lib.CSV.CSVStreamWriter
 import lib.collections.ImmutablePair
 import java.io.*
+import java.nio.file.Path
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.function.Consumer
+import kotlin.io.path.absolutePathString
 import kotlin.math.max
 
-class OrganizationDatabase : OrganizationManagerInterface {
+class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
     private var idFactory = IdFactory(1)
 
     private val initializationDate: LocalDateTime = LocalDateTime.now()
     private val organizations = LinkedList<Organization>()
     private val storedOrganizations = HashSet<ImmutablePair<String?, OrganizationType?>>()
 
+    init {
+        runBlocking { loadFromFile(path.absolutePathString()) }
+    }
 
     fun getOrganizations(): List<Organization> {
         return organizations
@@ -39,7 +45,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
             )
         }
 
-    override fun maxByFullName(): Organization? {
+    override suspend fun maxByFullName(): Organization? {
         if (organizations.isEmpty()) {
             return null
         }
@@ -61,18 +67,18 @@ class OrganizationDatabase : OrganizationManagerInterface {
             return result
         }
 
-    @Throws(OrganizationAlreadyPresentedException::class)
-    override fun add(vararg newOrganizations: Organization) {
+    override suspend fun add(vararg newOrganizations: Organization) {
         for (organization in newOrganizations) {
             add(organization)
         }
     }
 
-    @Throws(OrganizationAlreadyPresentedException::class)
-    override fun add(organization: Organization) {
+    override suspend fun add(organization: Organization) {
         if (organization.id == null) {
             organization.id = idFactory.nextId
         }
+
+        organization.creationDate = LocalDate.now()
 
         if (isOrganizationAlreadyPresented(organization)) {
             throw OrganizationAlreadyPresentedException()
@@ -82,7 +88,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
     }
 
     @Throws(OrganizationAlreadyPresentedException::class)
-    override fun addIfMax(newOrganization: Organization): ExecutionStatus {
+    override suspend fun addIfMax(newOrganization: Organization): ExecutionStatus {
         val maxOrganization = Collections.max(
             organizations,
             Comparator.comparing { obj: Organization -> obj.fullName!! }
@@ -103,7 +109,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
     }
 
     @Throws(OrganizationAlreadyPresentedException::class)
-    override fun modifyOrganization(updatedOrganization: Organization) {
+    override suspend fun modifyOrganization(updatedOrganization: Organization) {
         for (organization in organizations) {
             if (organization.id == updatedOrganization.id) {
                 completeModification(organization, updatedOrganization)
@@ -112,7 +118,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         }
     }
 
-    override fun removeAllByPostalAddress(address: Address) {
+    override suspend fun removeAllByPostalAddress(address: Address) {
         val toRemove: MutableList<Organization> = ArrayList()
         val pairsToRemove: MutableList<ImmutablePair<String?, OrganizationType?>> = ArrayList()
 
@@ -127,7 +133,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         pairsToRemove.forEach(Consumer { o: ImmutablePair<String?, OrganizationType?> -> storedOrganizations.remove(o) })
     }
 
-    override fun removeById(id: Int): ExecutionStatus {
+    override suspend fun removeById(id: Int): ExecutionStatus {
         for (organization in organizations) {
             if (organization.id == id) {
                 storedOrganizations.remove(organization.toPairOfFullNameAndType())
@@ -139,7 +145,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         return ExecutionStatus.FAILURE
     }
 
-    override fun removeHead(): Organization? {
+    override suspend fun removeHead(): Organization? {
         if (organizations.isEmpty()) {
             return null
         }
@@ -150,13 +156,12 @@ class OrganizationDatabase : OrganizationManagerInterface {
         return removedOrganization
     }
 
-    override fun clear() {
+    override suspend fun clear() {
         organizations.clear()
         storedOrganizations.clear()
     }
 
-    @Throws(OrganizationAlreadyPresentedException::class, IOException::class)
-    private fun tryToLoadFromFile(filename: String): ExecutionStatus {
+    private suspend fun tryToLoadFromFile(filename: String): ExecutionStatus {
         clear()
 
         val fileContent = IOHelper.readFile(filename) ?: return ExecutionStatus.FAILURE
@@ -165,25 +170,31 @@ class OrganizationDatabase : OrganizationManagerInterface {
         val reader = CSVStreamLikeReader(fileContent.substring(fileContent.indexOf('\n') + 1))
 
         while (!reader.isEndOfStream) {
+            if (reader.next.isBlank() && reader.elementLeftInLine == 0) {
+                reader.readElem()
+                continue
+            }
+
             val newOrganization: Organization = organizationFromStream(reader)
-            maxId = max(maxId.toDouble(), newOrganization.id!!.toDouble()).toInt()
+            maxId = max(maxId, newOrganization.id!!)
             add(newOrganization)
         }
 
-        idFactory = IdFactory(maxId + 1)
+        idFactory.setValue(maxId + 1)
         return ExecutionStatus.SUCCESS
     }
 
-    override fun loadFromFile(path: String): ExecutionStatus {
+    override suspend fun loadFromFile(path: String): ExecutionStatus {
         try {
             return tryToLoadFromFile(path)
         } catch (ignored: Exception) {
+            println("$ignored.message, $ignored.stackTrace")
         }
 
         return ExecutionStatus.FAILURE
     }
 
-    override fun saveToFile(path: String): ExecutionStatus {
+    override suspend fun save(path: String): ExecutionStatus {
         try {
             FileWriter(path).use { file ->
                 file.write(toCSV())
@@ -195,7 +206,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         }
     }
 
-    override fun toCSV(): String {
+    override suspend fun toCSV(): String {
         val stream = CSVStreamWriter(StringWriter())
         try {
             stream.append(CSVHeader.headerAsString)
@@ -213,7 +224,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         }
     }
 
-    override fun toYaml(): String {
+    override suspend fun toYaml(): String {
         val result = PrettyStringBuilder(2)
         result.appendLine("Organizations:")
         result.increaseIdent()
@@ -225,7 +236,7 @@ class OrganizationDatabase : OrganizationManagerInterface {
         return result.toString()
     }
 
-    override fun toJson(): String {
+    override suspend fun toJson(): String {
         try {
             val yaml = toYaml()
             val yamlReader = ObjectMapper(YAMLFactory())

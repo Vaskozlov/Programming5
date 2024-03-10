@@ -1,7 +1,7 @@
 package commands.client_side.core
 
 abstract class Command {
-    fun execute(argument: Any? = null): Result<Any?> {
+    suspend fun execute(argument: Any? = null): Result<Any?> {
         return try {
             executeImplementation(argument)
         } catch (e: Exception) {
@@ -9,5 +9,5 @@ abstract class Command {
         }
     }
 
-    protected abstract fun executeImplementation(argument: Any?): Result<Any?>
+    protected abstract suspend fun executeImplementation(argument: Any?): Result<Any?>
 }

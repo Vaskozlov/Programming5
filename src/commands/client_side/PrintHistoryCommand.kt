@@ -6,7 +6,7 @@ import lib.collections.CircledStorage
 
 class PrintHistoryCommand(application: Application) :
     ClientSideCommand(application) {
-    override fun executeImplementation(argument: Any?): Result<CircledStorage<String>?> {
+    override suspend fun executeImplementation(argument: Any?): Result<CircledStorage<String>?> {
         assert(argument == null)
 
         return Result.success(application.commandsHistory)

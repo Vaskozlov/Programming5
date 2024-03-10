@@ -6,7 +6,7 @@ import exceptions.InvalidOutputFormatException
 
 class ShowCommand(organizationDatabase: OrganizationManagerInterface) :
     ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<String> {
+    override suspend fun executeImplementation(argument: Any?): Result<String> {
         val mode = argument as String?
 
         return when (mode) {

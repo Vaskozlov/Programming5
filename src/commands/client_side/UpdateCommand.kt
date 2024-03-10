@@ -7,7 +7,7 @@ import database.OrganizationManagerInterface
 class UpdateCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override fun executeImplementation(argument: Any?): Result<Unit?> {
+    override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         organizationDatabase.modifyOrganization(argument as Organization)
         return Result.success(null)
     }
