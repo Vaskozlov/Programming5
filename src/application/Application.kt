@@ -9,7 +9,6 @@ import lib.Localization
 import lib.collections.CircledStorage
 import network.client.DatabaseCommand
 import java.io.InputStreamReader
-import kotlin.coroutines.CoroutineContext
 
 class Application(val organizationManager: OrganizationManagerInterface, dispatcher: CoroutineDispatcher) {
     val applicationScope = CoroutineScope(dispatcher)
@@ -94,14 +93,14 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
         loadCommands()
     }
 
-    fun start(dispatcher: CoroutineDispatcher = Dispatchers.Default) = runBlocking {
+    fun start(dispatcher: CoroutineDispatcher) = runBlocking {
         localize()
         printIntroductionMessage()
         running = true;
 
         while (running) {
             val line = bufferedReaderWithQueueOfStreams.readLine()
-            processCommand(line.trim(), dispatcher)
+            processCommand(line.trim())
         }
     }
 
@@ -109,7 +108,7 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
         running = false
     }
 
-    private suspend fun processCommand(input: String, dispatcher: CoroutineDispatcher) {
+    private suspend fun processCommand(input: String) {
         val allArguments = splitInputIntoArguments(input)
 
         if (allArguments.isEmpty()) {
@@ -126,7 +125,7 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
         }
 
         val executionArgument = argumentForCommand[databaseCommand]!!.invoke(argument)
-        executeCommand(databaseCommand, executionArgument)
+        applicationScope.launch { executeCommand(databaseCommand, executionArgument) }
     }
 
     private suspend fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {
