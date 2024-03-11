@@ -1,27 +1,30 @@
 package database
 
-import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import exceptions.OrganizationAlreadyPresentedException
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import lib.*
 import lib.CSV.CSVStreamLikeReader
 import lib.CSV.CSVStreamWriter
 import lib.collections.ImmutablePair
+import lib.json.ObjectMapperWithModules
+import lib.json.prettyWrite
+import lib.json.write
 import java.io.*
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.function.Consumer
 import java.util.stream.Collectors
+import kotlin.collections.HashSet
 import kotlin.io.path.absolutePathString
 import kotlin.math.max
 
-class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
+class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatchers.IO) :
+    OrganizationManagerInterface {
     private var idFactory = IdFactory(1)
+    private val databaseScope = CoroutineScope(dispatcher)
 
     private val initializationDate: LocalDateTime = LocalDateTime.now()
     private val organizations = LinkedList<Organization>()
@@ -31,20 +34,15 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
         runBlocking { loadFromFile(path.absolutePathString()) }
     }
 
-    fun getOrganizations(): List<Organization> {
-        return organizations
+    override suspend fun getInfo(): String {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+        return String.format(
+            Localization.get("organization.info_message"),
+            formatter.format(initializationDate),
+            organizations.size
+        )
     }
-
-    override val info: String
-        get() {
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-
-            return String.format(
-                Localization.get("organization.info_message"),
-                formatter.format(initializationDate),
-                organizations.size
-            )
-        }
 
     override suspend fun maxByFullName(): Organization? {
         if (organizations.isEmpty()) {
@@ -54,11 +52,10 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
         return organizations.stream().max(Comparator.comparing { obj: Organization -> obj.fullName!! }).get()
     }
 
-    override val sumOfAnnualTurnover: Double
-        get() {
-            return organizations.stream()
-                .collect(Collectors.summingDouble { organization -> organization.annualTurnover ?: 0.0 })
-        }
+    override suspend fun getSumOfAnnualTurnover(): Double {
+        return organizations.stream()
+            .collect(Collectors.summingDouble { organization -> organization.annualTurnover ?: 0.0 })
+    }
 
     override suspend fun add(vararg newOrganizations: Organization) {
         for (organization in newOrganizations) {
@@ -80,14 +77,11 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
         addNoCheck(organization)
     }
 
-    @Throws(OrganizationAlreadyPresentedException::class)
     override suspend fun addIfMax(newOrganization: Organization): ExecutionStatus {
-        val maxOrganization = Collections.max(
-            organizations,
-            Comparator.comparing { obj: Organization -> obj.fullName!! }
-        )
+        val maxOrganization =
+            organizations.stream().max(Comparator.comparing { obj: Organization -> obj.fullName!! }).get()
 
-        if (maxOrganization.fullName!!.compareTo(newOrganization.fullName!!) < 0) {
+        if (maxOrganization.fullName!! < newOrganization.fullName!!) {
             add(newOrganization)
             return ExecutionStatus.SUCCESS
         }
@@ -101,7 +95,6 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
         Collections.sort(organizations, Comparator.comparing { obj: Organization -> obj.fullName!! })
     }
 
-    @Throws(OrganizationAlreadyPresentedException::class)
     override suspend fun modifyOrganization(updatedOrganization: Organization) {
         for (organization in organizations) {
             if (organization.id == updatedOrganization.id) {
@@ -112,30 +105,17 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
     }
 
     override suspend fun removeAllByPostalAddress(address: Address) {
-        val toRemove: MutableList<Organization> = ArrayList()
-        val pairsToRemove: MutableList<ImmutablePair<String?, OrganizationType?>> = ArrayList()
-
-        for (organization in organizations) {
-            if (organization.postalAddress == address) {
-                toRemove.add(organization)
-                pairsToRemove.add(organization.toPairOfFullNameAndType())
-            }
+        organizations.stream().filter { organization: Organization ->
+            organization.postalAddress == address
+        }.forEach { organization: Organization ->
+            organizations.remove(organization)
+            storedOrganizations.remove(organization.toPairOfFullNameAndType())
         }
-
-        organizations.removeAll(toRemove)
-        pairsToRemove.forEach(Consumer { o: ImmutablePair<String?, OrganizationType?> -> storedOrganizations.remove(o) })
     }
 
     override suspend fun removeById(id: Int): ExecutionStatus {
-        for (organization in organizations) {
-            if (organization.id == id) {
-                storedOrganizations.remove(organization.toPairOfFullNameAndType())
-                organizations.remove(organization)
-                return ExecutionStatus.SUCCESS
-            }
-        }
-
-        return ExecutionStatus.FAILURE
+        val elementRemoved = organizations.removeIf { organization: Organization -> organization.id == id }
+        return ExecutionStatus.getByValue(elementRemoved)
     }
 
     override suspend fun removeHead(): Organization? {
@@ -187,19 +167,30 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
         return ExecutionStatus.FAILURE
     }
 
-    override suspend fun save(path: String): ExecutionStatus {
-        try {
+    override suspend fun save(path: String): Deferred<ExecutionStatus> {
+        return databaseScope.async {
+            tryToWriteToFile(path)
+        }
+    }
+
+    private fun tryToWriteToFile(path: String): ExecutionStatus {
+        return try {
             FileWriter(path).use { file ->
-                file.write(toCSV())
+                file.write(formCSV())
                 file.flush()
-                return ExecutionStatus.SUCCESS
             }
+
+            ExecutionStatus.SUCCESS
         } catch (exception: IOException) {
-            return ExecutionStatus.FAILURE
+            ExecutionStatus.FAILURE
         }
     }
 
     override suspend fun toCSV(): String {
+        return formCSV()
+    }
+
+    private fun formCSV(): String {
         val stream = CSVStreamWriter(StringWriter())
         try {
             stream.append(CSVHeader.headerAsString)
@@ -218,31 +209,15 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
     }
 
     override suspend fun toYaml(): String {
-        val result = PrettyStringBuilder(2)
-        result.appendLine("Organizations:")
-        result.increaseIdent()
-
-        for (organization in organizations) {
-            organization.constructYaml(result)
-        }
-
-        return result.toString()
+        val objectMapper = ObjectMapperWithModules(YAMLFactory())
+        return objectMapper.write(organizations)
     }
 
     override suspend fun toJson(): String {
-        try {
-            val yaml = toYaml()
-            val yamlReader = ObjectMapper(YAMLFactory())
-            val obj = yamlReader.readValue(yaml, Any::class.java)
-            val jsonWriter = ObjectMapper()
-
-            return jsonWriter.writerWithDefaultPrettyPrinter().writeValueAsString(obj)
-        } catch (error: JsonProcessingException) {
-            return "Unable to generate json file, because yaml version has mistakes"
-        }
+        val objectMapper = ObjectMapperWithModules()
+        return objectMapper.prettyWrite(organizations)
     }
 
-    @Throws(OrganizationAlreadyPresentedException::class)
     private fun completeModification(organization: Organization, updatedOrganization: Organization) {
         updatedOrganization.fillNullFromAnotherOrganization(organization)
 

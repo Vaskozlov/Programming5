@@ -5,14 +5,16 @@ import database.NetworkCode
 import database.Organization
 import database.OrganizationManagerInterface
 import exceptions.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import lib.ExecutionStatus
-import lib.json.fromJson
+import lib.json.read
 import network.client.DatabaseCommand
 import java.net.InetAddress
 
-class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInterface {
-    val commandSender = CommandSender(address, port)
+class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispatcher = Dispatchers.IO) :
+    OrganizationManagerInterface {
+    private val commandSender = CommandSender(address, port)
+    private val databaseScope = CoroutineScope(dispatcher)
 
     constructor(address: String, port: Int)
             : this(InetAddress.getByName(address), port)
@@ -23,7 +25,7 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
         val code = NetworkCode.valueOf(json.getNode("code").asText())
 
         return when (code) {
-            NetworkCode.SUCCESS -> Result.success(commandSender.jsonMapper.fromJson(json.getNode("value")))
+            NetworkCode.SUCCESS -> Result.success(commandSender.objectMapperWithModules.read(json.getNode("value")))
             NetworkCode.NOT_SUPPOERTED_COMMAND -> Result.failure(CommandNotExistsException())
             NetworkCode.NOT_A_MAXIMUM_ORGANIZATION -> Result.failure(NotMaximumOrganizationException())
             NetworkCode.ORGANIZATION_ALREADY_EXISTS -> Result.failure(OrganizationAlreadyPresentedException())
@@ -36,29 +38,17 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
         }
     }
 
-    override val info: String
-        get() {
-            val result: Result<Any?>
+    override suspend fun getInfo(): String {
+        val result = sendCommandAndReceiveResult(DatabaseCommand.INFO, null)
+        result.onFailure { throw it }
+        return result.getOrNull()!! as String
+    }
 
-            runBlocking {
-                result = sendCommandAndReceiveResult(DatabaseCommand.INFO, null)
-            }
-
-            result.onFailure { throw it }
-            return result.getOrNull()!! as String
-        }
-
-    override val sumOfAnnualTurnover: Double
-        get() {
-            val result: Result<Any?>
-
-            runBlocking {
-                result = sendCommandAndReceiveResult(DatabaseCommand.SUM_OF_ANNUAL_TURNOVER, null)
-            }
-
-            result.onFailure { throw it }
-            return result.getOrNull()!! as Double
-        }
+    override suspend fun getSumOfAnnualTurnover(): Double {
+        val result =  sendCommandAndReceiveResult(DatabaseCommand.SUM_OF_ANNUAL_TURNOVER, null)
+        result.onFailure { throw it }
+        return result.getOrNull()!! as Double
+    }
 
     override suspend fun maxByFullName(): Organization? {
         val result = sendCommandAndReceiveResult(DatabaseCommand.MAX_BY_FULL_NAME, null)
@@ -80,12 +70,7 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
 
     override suspend fun addIfMax(newOrganization: Organization): ExecutionStatus {
         val result = sendCommandAndReceiveResult(DatabaseCommand.ADD_IF_MAX, newOrganization)
-
-        return if (result.isSuccess) {
-            ExecutionStatus.SUCCESS
-        } else {
-            ExecutionStatus.FAILURE
-        }
+        return ExecutionStatus.getByValue(result.isSuccess)
     }
 
     override suspend fun modifyOrganization(updatedOrganization: Organization) {
@@ -94,12 +79,7 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
 
     override suspend fun removeById(id: Int): ExecutionStatus {
         val result = sendCommandAndReceiveResult(DatabaseCommand.REMOVE_BY_ID, id)
-
-        return if (result.isSuccess) {
-            ExecutionStatus.SUCCESS
-        } else {
-            ExecutionStatus.FAILURE
-        }
+        return ExecutionStatus.getByValue(result.isSuccess)
     }
 
     override suspend fun removeAllByPostalAddress(address: Address) {
@@ -120,24 +100,16 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
         sendCommandAndReceiveResult(DatabaseCommand.CLEAR, null).onFailure { throw it }
     }
 
-    override suspend fun save(path: String): ExecutionStatus {
-        val result = sendCommandAndReceiveResult(DatabaseCommand.SAVE, path)
-
-        return if (result.isSuccess) {
-            ExecutionStatus.SUCCESS
-        } else {
-            ExecutionStatus.FAILURE
+    override suspend fun save(path: String): Deferred<ExecutionStatus> {
+        return databaseScope.async {
+            val result = sendCommandAndReceiveResult(DatabaseCommand.SAVE, path)
+            ExecutionStatus.getByValue(result.isSuccess)
         }
     }
 
     override suspend fun loadFromFile(path: String): ExecutionStatus {
         val result = sendCommandAndReceiveResult(DatabaseCommand.READ, path)
-
-        return if (result.isSuccess) {
-            ExecutionStatus.SUCCESS
-        } else {
-            ExecutionStatus.FAILURE
-        }
+        return ExecutionStatus.getByValue(result.isSuccess)
     }
 
     override suspend fun toYaml(): String {

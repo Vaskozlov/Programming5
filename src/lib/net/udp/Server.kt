@@ -2,7 +2,7 @@ package lib.net.udp
 
 import database.NetworkCode
 import kotlinx.coroutines.*
-import lib.json.toJson
+import lib.json.write
 import network.client.udp.ResultFrame
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
@@ -21,7 +21,7 @@ abstract class Server protected constructor(port: Int, context: CoroutineContext
         frame: ResultFrame,
         dispatcher: CoroutineDispatcher = Dispatchers.IO
     ) {
-        val json = jsonMapper.toJson(frame)
+        val json = objectMapperWithModules.write(frame)
         val bytesToSend = json.toByteArray()
         val packet = DatagramPacket(bytesToSend, bytesToSend.size, user.address, user.port)
 
@@ -56,7 +56,7 @@ abstract class Server protected constructor(port: Int, context: CoroutineContext
             scope.launch(dispatcher) {
                 val user = packet.constructUser()
                 logger.trace("Handling packet from $user")
-                handlePacket(user, packet.constructJsonHolder(jsonMapper.objectMapper))
+                handlePacket(user, packet.constructJsonHolder(objectMapperWithModules.objectMapper))
             }
         } catch (e: Exception) {
             logger.error("Error while receiving packet: $e")

@@ -10,6 +10,6 @@ class SumOfAnnualTurnoverCommand : ServerSideCommand() {
         argument: Any?
     ): Result<Double> {
         assert(argument == null)
-        return Result.success(organizationManager.sumOfAnnualTurnover)
+        return Result.success(organizationManager.getSumOfAnnualTurnover())
     }
 }

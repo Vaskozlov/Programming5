@@ -2,7 +2,7 @@ package server
 
 import com.fasterxml.jackson.databind.JsonNode
 import database.*
-import lib.json.fromJson
+import lib.json.read
 import lib.net.udp.JsonHolder
 import network.client.DatabaseCommand
 import network.client.udp.User
@@ -20,28 +20,28 @@ class DatabaseCommandsReceiver(
     private var usersDatabases: MutableMap<AuthorizationHeader, OrganizationDatabase> = HashMap()
     private val commandArguments: MutableMap<DatabaseCommand, (AuthorizationHeader, JsonHolder) -> Any?> = mutableMapOf(
         DatabaseCommand.ADD to { _, jsonHolder ->
-            jsonMapper.fromJson<Organization>(
+            objectMapperWithModules.read<Organization>(
                 getObjectNode(
                     jsonHolder
                 )
             )
         },
         DatabaseCommand.REMOVE_BY_ID to { _, jsonHolder ->
-            jsonMapper.fromJson<Int>(
+            objectMapperWithModules.read<Int>(
                 getObjectNode(
                     jsonHolder
                 )
             )
         },
         DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to { _, jsonHolder ->
-            jsonMapper.fromJson<Address>(
+            objectMapperWithModules.read<Address>(
                 getObjectNode(
                     jsonHolder
                 )
             )
         },
         DatabaseCommand.READ to { _, jsonHolder ->
-            jsonMapper.fromJson<String>(
+            objectMapperWithModules.read<String>(
                 getObjectNode(
                     jsonHolder
                 )

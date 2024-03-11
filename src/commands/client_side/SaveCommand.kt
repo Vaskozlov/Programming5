@@ -10,7 +10,7 @@ class SaveCommand(organizationDatabase: OrganizationManagerInterface) :
     override suspend fun executeImplementation(argument: Any?): Result<Unit?> {
         assert(argument == null)
 
-        if (organizationDatabase.save("") == ExecutionStatus.FAILURE) {
+        if (organizationDatabase.save("").await() == ExecutionStatus.FAILURE) {
             return Result.failure(FileWriteException())
         }
 

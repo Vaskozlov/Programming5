@@ -1,8 +1,8 @@
 package server
 
-import lib.json.JsonMapper
-import lib.json.fromJson
-import lib.json.toJson
+import lib.json.ObjectMapperWithModules
+import lib.json.read
+import lib.json.write
 import org.apache.logging.log4j.kotlin.Logging
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
@@ -10,7 +10,7 @@ import kotlin.io.path.writeText
 
 class AuthorizationManager(
     private val usersInfoDirectory: Path,
-    private val jsonMapper: JsonMapper = JsonMapper()
+    private val objectMapperWithModules: ObjectMapperWithModules = ObjectMapperWithModules()
 ) : Logging {
     private val usersInfo: HashSet<AuthorizationHeader> = HashSet()
 
@@ -25,7 +25,7 @@ class AuthorizationManager(
 
         usersInfoFile.walk().forEach {
             if (it.isFile) {
-                val authorizationHeader: AuthorizationHeader = jsonMapper.fromJson(it)
+                val authorizationHeader: AuthorizationHeader = objectMapperWithModules.read(it)
                 usersInfo.add(authorizationHeader)
             }
         }
@@ -39,7 +39,7 @@ class AuthorizationManager(
 
     fun addUser(authorizationHeader: AuthorizationHeader) {
         usersInfo.add(authorizationHeader)
-        getAuthorizationFilePath(authorizationHeader).writeText(jsonMapper.toJson(authorizationHeader))
+        getAuthorizationFilePath(authorizationHeader).writeText(objectMapperWithModules.write(authorizationHeader))
     }
 
     fun removeUser(authorizationHeader: AuthorizationHeader) {

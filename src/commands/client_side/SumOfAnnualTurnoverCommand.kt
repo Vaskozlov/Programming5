@@ -8,7 +8,6 @@ class SumOfAnnualTurnoverCommand(
 ) : ServerSideCommand(organizationDatabase) {
     override suspend fun executeImplementation(argument: Any?): Result<Double> {
         assert(argument == null)
-
-        return Result.success(organizationDatabase.sumOfAnnualTurnover)
+        return Result.success(organizationDatabase.getSumOfAnnualTurnover())
     }
 }

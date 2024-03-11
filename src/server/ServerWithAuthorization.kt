@@ -1,6 +1,6 @@
 package server
 
-import lib.json.fromJson
+import lib.json.read
 import lib.net.udp.JsonHolder
 import network.client.udp.User
 import kotlin.coroutines.CoroutineContext
@@ -20,7 +20,7 @@ abstract class ServerWithAuthorization(
     )
 
     override suspend fun handlePacket(user: User, jsonHolder: JsonHolder) {
-        val authorizationHeader = jsonMapper.fromJson<AuthorizationHeader>(jsonHolder.getNode("authorization"))
+        val authorizationHeader = objectMapperWithModules.read<AuthorizationHeader>(jsonHolder.getNode("authorization"))
 
         if (!authorizationManager.isUserAuthorized(authorizationHeader)) {
             logger.warn("User $user is not authorized, it will be created")

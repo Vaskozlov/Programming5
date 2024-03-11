@@ -1,11 +1,12 @@
 package database
 
+import kotlinx.coroutines.Deferred
 import lib.ExecutionStatus
 
 interface OrganizationManagerInterface {
-    val info: String
+    suspend fun getInfo(): String
 
-    val sumOfAnnualTurnover: Double
+    suspend fun getSumOfAnnualTurnover(): Double
 
     suspend fun maxByFullName(): Organization?
 
@@ -25,7 +26,7 @@ interface OrganizationManagerInterface {
 
     suspend fun clear()
 
-    suspend fun save(path: String): ExecutionStatus
+    suspend fun save(path: String): Deferred<ExecutionStatus>
 
     suspend fun loadFromFile(path: String): ExecutionStatus
 

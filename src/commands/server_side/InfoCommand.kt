@@ -10,6 +10,6 @@ class InfoCommand : ServerSideCommand() {
         argument: Any?
     ): Result<String> {
         assert(argument == null)
-        return Result.success(organizationManager.info)
+        return Result.success(organizationManager.getInfo())
     }
 }

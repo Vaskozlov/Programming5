@@ -3,12 +3,12 @@ package lib.net.udp
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import lib.json.JsonMapper
+import lib.json.ObjectMapperWithModules
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 
-open class CommonNetwork(private val socket: DatagramSocket, val jsonMapper: JsonMapper = JsonMapper()) {
-    constructor(port: Int, jsonMapper: JsonMapper = JsonMapper()) : this(DatagramSocket(port), jsonMapper)
+open class CommonNetwork(private val socket: DatagramSocket, val objectMapperWithModules: ObjectMapperWithModules = ObjectMapperWithModules()) {
+    constructor(port: Int, objectMapperWithModules: ObjectMapperWithModules = ObjectMapperWithModules()) : this(DatagramSocket(port), objectMapperWithModules)
 
     fun setTimeout(timeout: Int) {
         socket.soTimeout = timeout
@@ -36,7 +36,7 @@ open class CommonNetwork(private val socket: DatagramSocket, val jsonMapper: Jso
 
     suspend fun receiveJson(dispatcher: CoroutineDispatcher = Dispatchers.IO): JsonHolder {
         val packet = receive(dispatcher)
-        return packet.constructJsonHolder(jsonMapper.objectMapper)
+        return packet.constructJsonHolder(objectMapperWithModules.objectMapper)
     }
 
     fun close() {

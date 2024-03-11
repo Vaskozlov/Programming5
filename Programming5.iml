@@ -16,6 +16,7 @@
     <orderEntry type="library" name="fasterxml.jackson.module.kotlin" level="project" />
     <orderEntry type="library" name="jetbrains.kotlinx.coroutines.core.jvm" level="project" />
     <orderEntry type="library" name="fasterxml.jackson.dataformat.yaml" level="project" />
+    <orderEntry type="library" name="fasterxml.jackson.dataformat.csv" level="project" />
   </component>
   <component name="SonarLintModuleSettings">
     <option name="uniqueId" value="ad3851f7-b48b-4d31-97cd-77807b3de48c" />

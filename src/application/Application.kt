@@ -43,7 +43,17 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
     private val argumentForCommand: Map<DatabaseCommand, (String?) -> Any?> = mapOf(
         DatabaseCommand.HELP to { null },
         DatabaseCommand.INFO to { null },
-        DatabaseCommand.SHOW to { null },
+        DatabaseCommand.CLEAR to { null },
+        DatabaseCommand.SAVE to { null },
+        DatabaseCommand.EXIT to { null },
+        DatabaseCommand.REMOVE_HEAD to { null },
+        DatabaseCommand.HISTORY to { null },
+        DatabaseCommand.MAX_BY_FULL_NAME to { null },
+        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to { null },
+        DatabaseCommand.SHOW to { it },
+        DatabaseCommand.READ to { it },
+        DatabaseCommand.EXECUTE_SCRIPT to { it },
+        DatabaseCommand.REMOVE_BY_ID to { it?.toIntOrNull() },
         DatabaseCommand.ADD to {
             OrganizationBuilder.constructOrganization(
                 bufferedReaderWithQueueOfStreams,
@@ -67,17 +77,7 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
                 bufferedReaderWithQueueOfStreams,
                 false
             )
-        },
-        DatabaseCommand.REMOVE_BY_ID to { it?.toIntOrNull() },
-        DatabaseCommand.CLEAR to { null },
-        DatabaseCommand.SAVE to { null },
-        DatabaseCommand.READ to { it },
-        DatabaseCommand.EXECUTE_SCRIPT to { it },
-        DatabaseCommand.EXIT to { null },
-        DatabaseCommand.REMOVE_HEAD to { null },
-        DatabaseCommand.HISTORY to { null },
-        DatabaseCommand.MAX_BY_FULL_NAME to { null },
-        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to { null }
+        }
     )
 
     private fun loadCommands() {
@@ -93,7 +93,7 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
         loadCommands()
     }
 
-    fun start(dispatcher: CoroutineDispatcher) = runBlocking {
+    fun start() = runBlocking {
         localize()
         printIntroductionMessage()
         running = true;
