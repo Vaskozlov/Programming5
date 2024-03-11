@@ -5,6 +5,7 @@ import database.NetworkCode
 import database.Organization
 import database.OrganizationManagerInterface
 import exceptions.*
+import kotlinx.coroutines.runBlocking
 import lib.ExecutionStatus
 import lib.json.fromJson
 import network.client.DatabaseCommand
@@ -36,10 +37,28 @@ class RemoteDatabase(address: InetAddress, port: Int) : OrganizationManagerInter
     }
 
     override val info: String
-        get() = TODO("Not yet implemented")
+        get() {
+            val result: Result<Any?>
 
-    override val sumOfAnnualTurnover: Float
-        get() = TODO("Not yet implemented")
+            runBlocking {
+                result = sendCommandAndReceiveResult(DatabaseCommand.INFO, null)
+            }
+
+            result.onFailure { throw it }
+            return result.getOrNull()!! as String
+        }
+
+    override val sumOfAnnualTurnover: Double
+        get() {
+            val result: Result<Any?>
+
+            runBlocking {
+                result = sendCommandAndReceiveResult(DatabaseCommand.SUM_OF_ANNUAL_TURNOVER, null)
+            }
+
+            result.onFailure { throw it }
+            return result.getOrNull()!! as Double
+        }
 
     override suspend fun maxByFullName(): Organization? {
         val result = sendCommandAndReceiveResult(DatabaseCommand.MAX_BY_FULL_NAME, null)

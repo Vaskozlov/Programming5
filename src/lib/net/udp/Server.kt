@@ -1,18 +1,18 @@
 package lib.net.udp
 
 import database.NetworkCode
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import lib.json.toJson
 import network.client.udp.ResultFrame
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
 import org.apache.logging.log4j.kotlin.logger
 import java.net.DatagramPacket
+import kotlin.coroutines.CoroutineContext
 
-abstract class Server protected constructor(port: Int) : Logging, CommonNetwork(port) {
+abstract class Server protected constructor(port: Int, context: CoroutineContext) : Logging, CommonNetwork(port) {
     private var running = false
+    private val serverScope = CoroutineScope(context + Job())
 
     protected abstract suspend fun handlePacket(user: User, jsonHolder: JsonHolder)
 
@@ -37,24 +37,27 @@ abstract class Server protected constructor(port: Int) : Logging, CommonNetwork(
         send(user, ResultFrame(code, value), dispatcher)
     }
 
-    suspend fun run() = coroutineScope {
+    fun run() = runBlocking {
         running = true
         logger.info("Server is running")
 
         while (running) {
-            loopCycle();
+            loopCycle(serverScope)
         }
-
-        close()
     }
 
-    private suspend fun loopCycle() {
+    private suspend fun loopCycle(scope: CoroutineScope, dispatcher: CoroutineDispatcher = Dispatchers.Default) {
         val buffer = ByteArray(bufferSize)
         val packet = DatagramPacket(buffer, buffer.size)
 
         try {
             receive(packet)
-            handlePacket(packet.constructUser(), packet.constructJsonHolder(jsonMapper.objectMapper))
+
+            scope.launch(dispatcher) {
+                val user = packet.constructUser()
+                logger.trace("Handling packet from $user")
+                handlePacket(user, packet.constructJsonHolder(jsonMapper.objectMapper))
+            }
         } catch (e: Exception) {
             logger.error("Error while receiving packet: $e")
         }

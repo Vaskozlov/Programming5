@@ -32,7 +32,7 @@ class CircledStorage<T>(size: Int) {
 
     fun applyFunctionOnAllElements(function: FunctionWithVoidReturnAndOneArgument<T>) {
         for (i in buffer.size downTo 1) {
-            val elem: T = get(currentIndex - i)
+            val elem: T? = get(currentIndex - i)
 
             if (elem != null) {
                 function.invoke(elem)
@@ -40,8 +40,8 @@ class CircledStorage<T>(size: Int) {
         }
     }
 
-    private fun get(index: Int): T {
-        return buffer[getIndexInCircle(index)]!!
+    private fun get(index: Int): T? {
+        return buffer[getIndexInCircle(index)]
     }
 
     private fun set(value: T, index: Int) {

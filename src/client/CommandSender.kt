@@ -10,7 +10,7 @@ class CommandSender(address: InetAddress, port: Int) : Client(address, port) {
     private var connected: Boolean = false
 
     init {
-        setTimeout(1000)
+        setTimeout(10000)
     }
 
     suspend fun sendCommand(command: DatabaseCommand, value: Any?) {

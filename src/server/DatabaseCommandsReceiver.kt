@@ -8,13 +8,15 @@ import network.client.DatabaseCommand
 import network.client.udp.User
 import org.apache.logging.log4j.kotlin.Logging
 import java.nio.file.Path
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.absolutePathString
 
 class DatabaseCommandsReceiver(
     port: Int,
+    context: CoroutineContext,
     userStoragePath: Path,
     private val databaseStoragePath: Path
-) : ServerWithAuthorization(port, "command", AuthorizationManager(userStoragePath)), Logging {
+) : ServerWithAuthorization(port, context, "command", AuthorizationManager(userStoragePath)), Logging {
     private var usersDatabases: MutableMap<AuthorizationHeader, OrganizationDatabase> = HashMap()
     private val commandArguments: MutableMap<DatabaseCommand, (AuthorizationHeader, JsonHolder) -> Any?> = mutableMapOf(
         DatabaseCommand.ADD to { _, jsonHolder ->

@@ -3,14 +3,16 @@ package application
 import commands.client_side.*
 import commands.client_side.core.Command
 import database.OrganizationManagerInterface
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import lib.BufferedReaderWithQueueOfStreams
 import lib.Localization
 import lib.collections.CircledStorage
 import network.client.DatabaseCommand
 import java.io.InputStreamReader
+import kotlin.coroutines.CoroutineContext
 
-class Application(val organizationManager: OrganizationManagerInterface) {
+class Application(val organizationManager: OrganizationManagerInterface, dispatcher: CoroutineDispatcher) {
+    val applicationScope = CoroutineScope(dispatcher)
     val commandsHistory: CircledStorage<String> = CircledStorage(11)
     val bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams = BufferedReaderWithQueueOfStreams(
         InputStreamReader(System.`in`)
@@ -75,7 +77,8 @@ class Application(val organizationManager: OrganizationManagerInterface) {
         DatabaseCommand.EXIT to { null },
         DatabaseCommand.REMOVE_HEAD to { null },
         DatabaseCommand.HISTORY to { null },
-        DatabaseCommand.MAX_BY_FULL_NAME to { null }
+        DatabaseCommand.MAX_BY_FULL_NAME to { null },
+        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to { null }
     )
 
     private fun loadCommands() {
@@ -91,18 +94,14 @@ class Application(val organizationManager: OrganizationManagerInterface) {
         loadCommands()
     }
 
-    fun start(databasePath: String?) = runBlocking {
-        if (databasePath != null) {
-            organizationManager.loadFromFile(databasePath)
-        }
-
+    fun start(dispatcher: CoroutineDispatcher = Dispatchers.Default) = runBlocking {
         localize()
         printIntroductionMessage()
         running = true;
 
         while (running) {
             val line = bufferedReaderWithQueueOfStreams.readLine()
-            processCommand(line.trim())
+            processCommand(line.trim(), dispatcher)
         }
     }
 
@@ -110,7 +109,7 @@ class Application(val organizationManager: OrganizationManagerInterface) {
         running = false
     }
 
-    private suspend fun processCommand(input: String) {
+    private suspend fun processCommand(input: String, dispatcher: CoroutineDispatcher) {
         val allArguments = splitInputIntoArguments(input)
 
         if (allArguments.isEmpty()) {
@@ -126,7 +125,8 @@ class Application(val organizationManager: OrganizationManagerInterface) {
             return
         }
 
-        executeCommand(databaseCommand, argumentForCommand[databaseCommand]!!.invoke(argument))
+        val executionArgument = argumentForCommand[databaseCommand]!!.invoke(argument)
+        executeCommand(databaseCommand, executionArgument)
     }
 
     private suspend fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {

@@ -3,13 +3,15 @@ package server
 import lib.json.fromJson
 import lib.net.udp.JsonHolder
 import network.client.udp.User
+import kotlin.coroutines.CoroutineContext
 
 abstract class ServerWithAuthorization(
     port: Int,
+    context: CoroutineContext,
     commandFieldName: String,
     private val authorizationManager: AuthorizationManager
 ) :
-    ServerWithCommands(port, commandFieldName) {
+    ServerWithCommands(port, context, commandFieldName) {
 
     abstract suspend fun handleAuthorized(
         user: User,

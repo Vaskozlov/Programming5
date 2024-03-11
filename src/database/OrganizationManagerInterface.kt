@@ -5,7 +5,7 @@ import lib.ExecutionStatus
 interface OrganizationManagerInterface {
     val info: String
 
-    val sumOfAnnualTurnover: Float
+    val sumOfAnnualTurnover: Double
 
     suspend fun maxByFullName(): Organization?
 

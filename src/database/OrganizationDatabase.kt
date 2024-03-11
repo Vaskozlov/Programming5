@@ -16,6 +16,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.function.Consumer
+import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 import kotlin.math.max
 
@@ -50,21 +51,13 @@ class OrganizationDatabase(path: Path) : OrganizationManagerInterface {
             return null
         }
 
-        return Collections.max(
-            organizations,
-            Comparator.comparing { obj: Organization -> obj.fullName!! }
-        )
+        return organizations.stream().max(Comparator.comparing { obj: Organization -> obj.fullName!! }).get()
     }
 
-    override val sumOfAnnualTurnover: Float
+    override val sumOfAnnualTurnover: Double
         get() {
-            var result = 0.0f
-
-            for (organization in organizations) {
-                result += organization.annualTurnover!!
-            }
-
-            return result
+            return organizations.stream()
+                .collect(Collectors.summingDouble { organization -> organization.annualTurnover ?: 0.0 })
         }
 
     override suspend fun add(vararg newOrganizations: Organization) {

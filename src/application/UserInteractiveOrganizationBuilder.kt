@@ -41,12 +41,12 @@ class UserInteractiveOrganizationBuilder(
             return Coordinates(x, y)
         }
 
-    val annualTurnover: Float?
+    val annualTurnover: Double?
         get() {
             val result = getNumber(
                 Localization.get("organization_builder.input.annual_turnover"),
                 false
-            ) { s -> s.toFloat() }
+            ) { s -> s.toDouble() }
 
             if (result != null && result <= 0) {
                 println(Localization.get("organization_builder.input.annual_turnover.limit.message"))

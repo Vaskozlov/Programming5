@@ -8,7 +8,7 @@ class SumOfAnnualTurnoverCommand : ServerSideCommand() {
         user: User?,
         organizationManager: OrganizationManagerInterface,
         argument: Any?
-    ): Result<Float> {
+    ): Result<Double> {
         assert(argument == null)
         return Result.success(organizationManager.sumOfAnnualTurnover)
     }

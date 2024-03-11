@@ -6,7 +6,7 @@ import database.OrganizationManagerInterface
 class SumOfAnnualTurnoverCommand(
     organizationDatabase: OrganizationManagerInterface
 ) : ServerSideCommand(organizationDatabase) {
-    override suspend fun executeImplementation(argument: Any?): Result<Float> {
+    override suspend fun executeImplementation(argument: Any?): Result<Double> {
         assert(argument == null)
 
         return Result.success(organizationDatabase.sumOfAnnualTurnover)

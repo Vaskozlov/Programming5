@@ -18,7 +18,8 @@ var commandMap: Map<DatabaseCommand, ServerSideCommand> = mapOf(
     DatabaseCommand.READ to ReadCommand(),
     DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to RemoveAllByPostalAddressCommand(),
     DatabaseCommand.UPDATE to UpdateCommand(),
-    DatabaseCommand.EXIT to ExitCommand()
+    DatabaseCommand.EXIT to ExitCommand(),
+    DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand()
 )
 
 fun errorToNetworkCode(error: Throwable?): NetworkCode {

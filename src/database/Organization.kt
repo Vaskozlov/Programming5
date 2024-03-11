@@ -13,7 +13,7 @@ data class Organization(
     var name: String?,
     var coordinates: Coordinates?,
     var creationDate: LocalDate?,
-    var annualTurnover: Float?,
+    var annualTurnover: Double?,
     var fullName: String?,
     var employeesCount: Int?,
     var type: OrganizationType?,

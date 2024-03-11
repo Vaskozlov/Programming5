@@ -72,7 +72,7 @@ fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String {
             String.format(
                 "%s: %f.",
                 Localization.get("message.sum_of_annual_turnover"),
-                argument as Float?
+                argument as Double?
             )
     }
 }

@@ -46,7 +46,7 @@ fun organizationFromStream(stream: CSVStreamLikeReader): Organization {
         stream.readElem(),
         coordinatesFromStream(stream),
         LocalDate.parse(stream.readElem()),
-        stream.readElem().toFloat(),
+        stream.readElem().toDouble(),
         stream.readElem(),
         ConvertToStreamHelper.convertNullableFromStream(
             stream

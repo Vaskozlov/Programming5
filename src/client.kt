@@ -1,11 +1,20 @@
 import application.*
 import client.RemoteDatabase
+import kotlinx.coroutines.Dispatchers
 
 object Client {
     @JvmStatic
     fun main(args: Array<String>) {
-        val filename = System.getenv("DATABASE_PATH")
-        val application = Application(RemoteDatabase("localhost", 8080))
-        application.start(filename)
+        val serverIp = System.getenv("SERVER_IP") ?: "localhost"
+        val serverPort = System.getenv("SERVER_PORT")?.toIntOrNull() ?: 8080
+
+        val application = Application(
+            RemoteDatabase(
+                serverIp,
+                serverPort
+            ), Dispatchers.Default
+        )
+
+        application.start()
     }
 }
