@@ -1,6 +1,6 @@
 package server
 
-import commands.server_side.*
+import commands.server.*
 import database.NetworkCode
 import exceptions.*
 import network.client.DatabaseCommand

@@ -17,7 +17,7 @@ class DatabaseCommandsReceiver(
     userStoragePath: Path,
     private val databaseStoragePath: Path
 ) : ServerWithAuthorization(port, context, "command", AuthorizationManager(userStoragePath)), Logging {
-    private var usersDatabases: MutableMap<AuthorizationInfo, OrganizationDatabase> = HashMap()
+    private var usersDatabases: MutableMap<AuthorizationInfo, LocalDatabase> = HashMap()
     private val commandArguments: MutableMap<DatabaseCommand, (AuthorizationInfo, JsonHolder) -> Any?> = mutableMapOf(
         DatabaseCommand.ADD to { _, jsonHolder ->
             objectMapperWithModules.read<Organization>(
@@ -74,10 +74,10 @@ class DatabaseCommandsReceiver(
     private suspend fun execute(
         command: DatabaseCommand,
         user: User,
-        organizationManager: OrganizationManagerInterface,
+        database: DatabaseInterface,
         argument: Any?
     ): Result<Any?>? {
-        return commandMap[command]?.execute(user, organizationManager, argument)
+        return commandMap[command]?.execute(user, database, argument)
     }
 
     private fun getArgumentForTheCommand(
@@ -103,10 +103,10 @@ class DatabaseCommandsReceiver(
         jsonHolder: JsonHolder
     ) {
         val commandName = getCommandFromJson(jsonHolder)
-        val database: OrganizationManagerInterface =
+        val database: DatabaseInterface =
             usersDatabases.getOrPut(
                 authorizationInfo
-            ) { OrganizationDatabase(getUserDatabaseFile(authorizationInfo)) }
+            ) { LocalDatabase(getUserDatabaseFile(authorizationInfo)) }
 
         if (!DatabaseCommand.containsKey(commandName)) {
             send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)

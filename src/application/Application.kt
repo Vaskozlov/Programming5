@@ -1,8 +1,8 @@
 package application
 
-import commands.client_side.*
-import commands.client_side.core.Command
-import database.OrganizationManagerInterface
+import commands.client.*
+import commands.client.core.Command
+import database.DatabaseInterface
 import kotlinx.coroutines.*
 import lib.BufferedReaderWithQueueOfStreams
 import lib.Localization
@@ -10,7 +10,7 @@ import lib.collections.CircledStorage
 import network.client.DatabaseCommand
 import java.io.InputStreamReader
 
-class Application(val organizationManager: OrganizationManagerInterface, dispatcher: CoroutineDispatcher) {
+class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatcher) {
     private val applicationScope = CoroutineScope(dispatcher)
     val commandsHistory: CircledStorage<String> = CircledStorage(11)
     val bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams = BufferedReaderWithQueueOfStreams(
@@ -22,22 +22,22 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
 
     private val databaseCommandToExecutor: Map<DatabaseCommand, Command> = mapOf(
         DatabaseCommand.HELP to HelpCommand(),
-        DatabaseCommand.INFO to InfoCommand(organizationManager),
-        DatabaseCommand.SHOW to ShowCommand(organizationManager),
-        DatabaseCommand.ADD to AddCommand(organizationManager),
-        DatabaseCommand.UPDATE to UpdateCommand(organizationManager),
-        DatabaseCommand.REMOVE_BY_ID to RemoveByIdCommand(organizationManager),
-        DatabaseCommand.CLEAR to ClearCommand(organizationManager),
-        DatabaseCommand.SAVE to SaveCommand(organizationManager),
-        DatabaseCommand.READ to ReadCommand(organizationManager),
+        DatabaseCommand.INFO to InfoCommand(database),
+        DatabaseCommand.SHOW to ShowCommand(database),
+        DatabaseCommand.ADD to AddCommand(database),
+        DatabaseCommand.UPDATE to UpdateCommand(database),
+        DatabaseCommand.REMOVE_BY_ID to RemoveByIdCommand(database),
+        DatabaseCommand.CLEAR to ClearCommand(database),
+        DatabaseCommand.SAVE to SaveCommand(database),
+        DatabaseCommand.READ to ReadCommand(database),
         DatabaseCommand.EXECUTE_SCRIPT to ExecuteScriptCommand(this),
         DatabaseCommand.EXIT to ExitCommand(this),
-        DatabaseCommand.REMOVE_HEAD to RemoveHeadCommand(organizationManager),
-        DatabaseCommand.ADD_IF_MAX to AddIfMaxCommand(organizationManager),
+        DatabaseCommand.REMOVE_HEAD to RemoveHeadCommand(database),
+        DatabaseCommand.ADD_IF_MAX to AddIfMaxCommand(database),
         DatabaseCommand.HISTORY to PrintHistoryCommand(this),
-        DatabaseCommand.MAX_BY_FULL_NAME to MaxByFullNameCommand(organizationManager),
-        DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to RemoveAllByPostalAddressCommand(organizationManager),
-        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand(organizationManager)
+        DatabaseCommand.MAX_BY_FULL_NAME to MaxByFullNameCommand(database),
+        DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to RemoveAllByPostalAddressCommand(database),
+        DatabaseCommand.SUM_OF_ANNUAL_TURNOVER to SumOfAnnualTurnoverCommand(database)
     )
 
     private val argumentForCommand: Map<DatabaseCommand, (String?) -> Any?> = mapOf(

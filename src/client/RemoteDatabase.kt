@@ -3,7 +3,7 @@ package client
 import database.Address
 import database.NetworkCode
 import database.Organization
-import database.OrganizationManagerInterface
+import database.DatabaseInterface
 import exceptions.*
 import kotlinx.coroutines.*
 import lib.ExecutionStatus
@@ -12,7 +12,7 @@ import network.client.DatabaseCommand
 import java.net.InetAddress
 
 class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispatcher = Dispatchers.IO) :
-    OrganizationManagerInterface {
+    DatabaseInterface {
     private val commandSender = CommandSender(address, port)
     private val databaseScope = CoroutineScope(dispatcher)
 
