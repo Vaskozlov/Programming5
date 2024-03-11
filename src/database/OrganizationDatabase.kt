@@ -2,6 +2,7 @@ package database
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import exceptions.OrganizationAlreadyPresentedException
+import exceptions.OrganizationNotFoundException
 import kotlinx.coroutines.*
 import lib.*
 import lib.CSV.CSVStreamLikeReader
@@ -44,24 +45,17 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
         )
     }
 
-    override suspend fun maxByFullName(): Organization? {
-        if (organizations.isEmpty()) {
-            return null
-        }
+    override suspend fun maxByFullName(): Organization? =
+        organizations.maxByOrNull { it.fullName!! }
 
-        return organizations.stream().max(Comparator.comparing { obj: Organization -> obj.fullName!! }).get()
-    }
-
-    override suspend fun getSumOfAnnualTurnover(): Double {
-        return organizations.stream()
+    override suspend fun getSumOfAnnualTurnover(): Double =
+        organizations.stream()
             .collect(Collectors.summingDouble { organization -> organization.annualTurnover ?: 0.0 })
-    }
 
-    override suspend fun add(vararg newOrganizations: Organization) {
-        for (organization in newOrganizations) {
-            add(organization)
-        }
-    }
+
+    override suspend fun add(vararg newOrganizations: Organization) =
+        newOrganizations.forEach { add(it) }
+
 
     override suspend fun add(organization: Organization) {
         if (organization.id == null) {
@@ -78,10 +72,9 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
     }
 
     override suspend fun addIfMax(newOrganization: Organization): ExecutionStatus {
-        val maxOrganization =
-            organizations.stream().max(Comparator.comparing { obj: Organization -> obj.fullName!! }).get()
+        val maxOrganization = organizations.maxByOrNull { it.fullName!! }
 
-        if (maxOrganization.fullName!! < newOrganization.fullName!!) {
+        if (maxOrganization == null || maxOrganization.fullName!! < newOrganization.fullName!!) {
             add(newOrganization)
             return ExecutionStatus.SUCCESS
         }
@@ -92,19 +85,21 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
     private fun addNoCheck(organization: Organization) {
         organizations.add(organization)
         storedOrganizations.add(organization.toPairOfFullNameAndType())
-        Collections.sort(organizations, Comparator.comparing { obj: Organization -> obj.fullName!! })
+        organizations.sortBy { it.fullName }
     }
 
     override suspend fun modifyOrganization(updatedOrganization: Organization) {
-        for (organization in organizations) {
-            if (organization.id == updatedOrganization.id) {
-                completeModification(organization, updatedOrganization)
-                break
-            }
+        val organization = organizations.find { it.id == updatedOrganization.id }
+
+        if (organization == null) {
+            throw OrganizationNotFoundException()
         }
+
+        completeModification(organization, updatedOrganization)
     }
 
     override suspend fun removeAllByPostalAddress(address: Address) {
+        // shall I just use filter instead of streams().filter?
         organizations.stream().filter { organization: Organization ->
             organization.postalAddress == address
         }.forEach { organization: Organization ->
@@ -119,12 +114,12 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
     }
 
     override suspend fun removeHead(): Organization? {
-        if (organizations.isEmpty()) {
-            return null
-        }
 
-        val removedOrganization = organizations.removeFirst()
-        storedOrganizations.remove(removedOrganization.toPairOfFullNameAndType())
+        val removedOrganization = organizations.removeFirstOrNull()
+
+        removedOrganization?.let {
+            storedOrganizations.remove(it.toPairOfFullNameAndType())
+        }
 
         return removedOrganization
     }
@@ -158,13 +153,12 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
     }
 
     override suspend fun loadFromFile(path: String): ExecutionStatus {
-        try {
-            return tryToLoadFromFile(path)
+        return try {
+            tryToLoadFromFile(path)
         } catch (ignored: Exception) {
             println("$ignored.message, $ignored.stackTrace")
+            ExecutionStatus.FAILURE
         }
-
-        return ExecutionStatus.FAILURE
     }
 
     override suspend fun save(path: String): Deferred<ExecutionStatus> {
@@ -196,8 +190,8 @@ class OrganizationDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatc
             stream.append(CSVHeader.headerAsString)
             stream.newLine()
 
-            for (organization in organizations) {
-                organization.writeToStream(stream)
+            organizations.forEach {
+                it.writeToStream(stream)
                 stream.newLine()
             }
 

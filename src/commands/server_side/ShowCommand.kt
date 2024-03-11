@@ -11,10 +11,10 @@ class ShowCommand : ServerSideCommand() {
         argument: Any?
     ): Result<String> {
         return when (argument as String?) {
-            null, "yaml" -> return Result.success(organizationManager.toYaml())
-            "json" -> return Result.success(organizationManager.toJson())
-            "csv" -> return Result.success(organizationManager.toCSV())
-            else -> return Result.failure(InvalidOutputFormatException())
+            null, "yaml" -> Result.success(organizationManager.toYaml())
+            "json" -> Result.success(organizationManager.toJson())
+            "csv" -> Result.success(organizationManager.toCSV())
+            else -> Result.failure(InvalidOutputFormatException())
         }
     }
 }

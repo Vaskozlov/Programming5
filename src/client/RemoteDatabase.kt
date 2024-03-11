@@ -45,7 +45,7 @@ class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispa
     }
 
     override suspend fun getSumOfAnnualTurnover(): Double {
-        val result =  sendCommandAndReceiveResult(DatabaseCommand.SUM_OF_ANNUAL_TURNOVER, null)
+        val result = sendCommandAndReceiveResult(DatabaseCommand.SUM_OF_ANNUAL_TURNOVER, null)
         result.onFailure { throw it }
         return result.getOrNull()!! as Double
     }
@@ -112,33 +112,15 @@ class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispa
         return ExecutionStatus.getByValue(result.isSuccess)
     }
 
-    override suspend fun toYaml(): String {
-        val result = sendCommandAndReceiveResult(DatabaseCommand.SHOW, "yaml")
-
-        return if (result.isSuccess) {
-            result.getOrNull() as String
-        } else {
-            throw Exception()
-        }
+    private suspend fun sendShowCommand(format: String): String {
+        val result = sendCommandAndReceiveResult(DatabaseCommand.SHOW, format)
+        result.onFailure { throw it }
+        return result.getOrNull() as String
     }
 
-    override suspend fun toJson(): String {
-        val result = sendCommandAndReceiveResult(DatabaseCommand.SHOW, "json")
+    override suspend fun toYaml(): String = sendShowCommand("yaml")
 
-        return if (result.isSuccess) {
-            result.getOrNull() as String
-        } else {
-            throw Exception()
-        }
-    }
+    override suspend fun toJson(): String = sendShowCommand("json")
 
-    override suspend fun toCSV(): String {
-        val result = sendCommandAndReceiveResult(DatabaseCommand.SHOW, "csv")
-
-        return if (result.isSuccess) {
-            result.getOrNull() as String
-        } else {
-            throw Exception()
-        }
-    }
+    override suspend fun toCSV(): String = sendShowCommand("csv")
 }

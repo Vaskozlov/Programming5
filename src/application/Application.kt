@@ -11,7 +11,7 @@ import network.client.DatabaseCommand
 import java.io.InputStreamReader
 
 class Application(val organizationManager: OrganizationManagerInterface, dispatcher: CoroutineDispatcher) {
-    val applicationScope = CoroutineScope(dispatcher)
+    private val applicationScope = CoroutineScope(dispatcher)
     val commandsHistory: CircledStorage<String> = CircledStorage(11)
     val bufferedReaderWithQueueOfStreams: BufferedReaderWithQueueOfStreams = BufferedReaderWithQueueOfStreams(
         InputStreamReader(System.`in`)
@@ -96,7 +96,7 @@ class Application(val organizationManager: OrganizationManagerInterface, dispatc
     fun start() = runBlocking {
         localize()
         printIntroductionMessage()
-        running = true;
+        running = true
 
         while (running) {
             val line = bufferedReaderWithQueueOfStreams.readLine()

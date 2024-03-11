@@ -17,5 +17,11 @@ enum class DatabaseCommand {
     SUM_OF_ANNUAL_TURNOVER,
     MAX_BY_FULL_NAME,
     EXECUTE_SCRIPT,
-    HELP
+    HELP;
+
+    companion object
+    {
+        private val stringRepresentations: Set<String> = entries.map { it.name }.toHashSet()
+        fun containsKey(key: String): Boolean = stringRepresentations.contains(key)
+    }
 }

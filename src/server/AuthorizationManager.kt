@@ -12,41 +12,37 @@ class AuthorizationManager(
     private val usersInfoDirectory: Path,
     private val objectMapperWithModules: ObjectMapperWithModules = ObjectMapperWithModules()
 ) : Logging {
-    private val usersInfo: HashSet<AuthorizationHeader> = HashSet()
+    private val authorizedUsers: HashSet<AuthorizationInfo> = HashSet()
 
     init {
-        val usersInfoFile = usersInfoDirectory.toFile()
+        val userAuthorizationFile = usersInfoDirectory.toFile()
 
-        if (!usersInfoFile.exists()) {
-            usersInfoFile.mkdirs()
+        if (!userAuthorizationFile.exists()) {
+            userAuthorizationFile.mkdirs()
         }
 
-        require(usersInfoFile.isDirectory)
+        require(userAuthorizationFile.isDirectory)
 
-        usersInfoFile.walk().forEach {
-            if (it.isFile) {
-                val authorizationHeader: AuthorizationHeader = objectMapperWithModules.read(it)
-                usersInfo.add(authorizationHeader)
-            }
-        }
+        userAuthorizationFile.walk().filter { it.isFile }.map { objectMapperWithModules.read<AuthorizationInfo>(it) }
+            .forEach { authorizedUsers.add(it) }
 
         logger.info("Users info loaded")
     }
 
-    fun isUserAuthorized(authorizationHeader: AuthorizationHeader): Boolean {
-        return usersInfo.contains(authorizationHeader)
+    fun isAuthorized(authorizationInfo: AuthorizationInfo): Boolean {
+        return authorizedUsers.contains(authorizationInfo)
     }
 
-    fun addUser(authorizationHeader: AuthorizationHeader) {
-        usersInfo.add(authorizationHeader)
-        getAuthorizationFilePath(authorizationHeader).writeText(objectMapperWithModules.write(authorizationHeader))
+    fun addUser(authorizationInfo: AuthorizationInfo) {
+        authorizedUsers.add(authorizationInfo)
+        getAuthorizationFilePath(authorizationInfo).writeText(objectMapperWithModules.write(authorizationInfo))
     }
 
-    fun removeUser(authorizationHeader: AuthorizationHeader) {
-        getAuthorizationFilePath(authorizationHeader).deleteIfExists()
+    fun removeUser(authorizationInfo: AuthorizationInfo) {
+        getAuthorizationFilePath(authorizationInfo).deleteIfExists()
     }
 
-    private fun getAuthorizationFilePath(authorizationHeader: AuthorizationHeader): Path {
-        return usersInfoDirectory.resolve("${authorizationHeader.login}.json")
+    private fun getAuthorizationFilePath(authorizationInfo: AuthorizationInfo): Path {
+        return usersInfoDirectory.resolve("${authorizationInfo.login}.json")
     }
 }

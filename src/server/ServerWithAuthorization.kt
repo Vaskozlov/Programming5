@@ -15,20 +15,20 @@ abstract class ServerWithAuthorization(
 
     abstract suspend fun handleAuthorized(
         user: User,
-        authorizationHeader: AuthorizationHeader,
+        authorizationInfo: AuthorizationInfo,
         jsonHolder: JsonHolder
     )
 
     override suspend fun handlePacket(user: User, jsonHolder: JsonHolder) {
-        val authorizationHeader = objectMapperWithModules.read<AuthorizationHeader>(jsonHolder.getNode("authorization"))
+        val authorizationInfo = objectMapperWithModules.read<AuthorizationInfo>(jsonHolder.getNode("authorization"))
 
-        if (!authorizationManager.isUserAuthorized(authorizationHeader)) {
+        if (!authorizationManager.isAuthorized(authorizationInfo)) {
             logger.warn("User $user is not authorized, it will be created")
-            authorizationManager.addUser(authorizationHeader)
+            authorizationManager.addUser(authorizationInfo)
         } else {
-            logger.info("Received packet from authorized user: ${authorizationHeader.login}")
+            logger.info("Received packet from authorized user: ${authorizationInfo.login}")
         }
 
-        handleAuthorized(user, authorizationHeader, jsonHolder)
+        handleAuthorized(user, authorizationInfo, jsonHolder)
     }
 }

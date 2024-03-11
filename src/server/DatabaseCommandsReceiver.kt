@@ -17,8 +17,8 @@ class DatabaseCommandsReceiver(
     userStoragePath: Path,
     private val databaseStoragePath: Path
 ) : ServerWithAuthorization(port, context, "command", AuthorizationManager(userStoragePath)), Logging {
-    private var usersDatabases: MutableMap<AuthorizationHeader, OrganizationDatabase> = HashMap()
-    private val commandArguments: MutableMap<DatabaseCommand, (AuthorizationHeader, JsonHolder) -> Any?> = mutableMapOf(
+    private var usersDatabases: MutableMap<AuthorizationInfo, OrganizationDatabase> = HashMap()
+    private val commandArguments: MutableMap<DatabaseCommand, (AuthorizationInfo, JsonHolder) -> Any?> = mutableMapOf(
         DatabaseCommand.ADD to { _, jsonHolder ->
             objectMapperWithModules.read<Organization>(
                 getObjectNode(
@@ -82,10 +82,10 @@ class DatabaseCommandsReceiver(
 
     private fun getArgumentForTheCommand(
         command: DatabaseCommand,
-        authorizationHeader: AuthorizationHeader,
+        authorizationInfo: AuthorizationInfo,
         jsonHolder: JsonHolder
     ): Any? {
-        return commandArguments[command]?.invoke(authorizationHeader, jsonHolder)
+        return commandArguments[command]?.invoke(authorizationInfo, jsonHolder)
     }
 
     private suspend fun sendResult(
@@ -99,16 +99,16 @@ class DatabaseCommandsReceiver(
 
     override suspend fun handleAuthorized(
         user: User,
-        authorizationHeader: AuthorizationHeader,
+        authorizationInfo: AuthorizationInfo,
         jsonHolder: JsonHolder
     ) {
         val commandName = getCommandFromJson(jsonHolder)
         val database: OrganizationManagerInterface =
             usersDatabases.getOrPut(
-                authorizationHeader
-            ) { OrganizationDatabase(getUserDatabaseFile(authorizationHeader)) }
+                authorizationInfo
+            ) { OrganizationDatabase(getUserDatabaseFile(authorizationInfo)) }
 
-        if (!DatabaseCommand.entries.map { it.name }.contains(commandName)) {
+        if (!DatabaseCommand.containsKey(commandName)) {
             send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
             return
         }
@@ -124,7 +124,7 @@ class DatabaseCommandsReceiver(
 
         logger.trace("Executing command: $command , from $user")
         val result =
-            execute(command, user, database, getArgumentForTheCommand(command, authorizationHeader, jsonHolder))
+            execute(command, user, database, getArgumentForTheCommand(command, authorizationInfo, jsonHolder))
         sendResult(user, result!!)
     }
 
@@ -132,7 +132,7 @@ class DatabaseCommandsReceiver(
         return jsonHolder.getNode("value")
     }
 
-    private fun getUserDatabaseFile(authorizationHeader: AuthorizationHeader): Path {
-        return databaseStoragePath.resolve("${authorizationHeader.login}.csv")
+    private fun getUserDatabaseFile(authorizationInfo: AuthorizationInfo): Path {
+        return databaseStoragePath.resolve("${authorizationInfo.login}.csv")
     }
 }
