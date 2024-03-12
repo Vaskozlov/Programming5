@@ -11,10 +11,13 @@ import lib.functions.FunctionWithVoidReturnAndOneArgument
 fun <T> writeNullableToStream(
     stream: CSVStreamWriter,
     value: T?,
+    timesIfNull: Int,
     function: FunctionWithVoidReturnAndOneArgument<T>
 ) {
     if (value == null) {
-        stream.append("null")
+        for (i in timesIfNull downTo 1) {
+            stream.append("null")
+        }
     } else {
         function.invoke(value)
     }

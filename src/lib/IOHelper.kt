@@ -9,7 +9,7 @@ object IOHelper {
     /**
      * @return null if unable to read file, otherwise file content
      */
-    fun readFile(filename: String?): String? {
+    fun readFile(filename: String): String? {
         try {
             FileInputStream(filename).use { file ->
                 BufferedInputStream(file).use { stream ->

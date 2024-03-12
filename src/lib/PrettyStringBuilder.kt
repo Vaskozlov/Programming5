@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Helps to build pretty string with different idents in thread safe way
  */
-class PrettyStringBuilder @JvmOverloads constructor(identSize: Int = 2) {
+class PrettyStringBuilder(identSize: Int = 2) {
     private val stringBuilder = StringBuffer()
     private val ident = AtomicInteger(0)
     private val identSize = AtomicInteger(identSize)

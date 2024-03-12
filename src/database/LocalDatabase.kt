@@ -83,6 +83,7 @@ class LocalDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatchers.IO
     }
 
     private fun addNoCheck(organization: Organization) {
+        organization.validate()
         organizations.add(organization)
         storedOrganizations.add(organization.toPairOfFullNameAndType())
         organizations.sortBy { it.fullName }
@@ -138,8 +139,8 @@ class LocalDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatchers.IO
         val reader = CSVStreamLikeReader(fileContent.substring(fileContent.indexOf('\n') + 1))
 
         while (!reader.isEndOfStream) {
-            if (reader.next.isBlank() && reader.elementLeftInLine == 0) {
-                reader.readElem()
+            if (reader.elementLeftInLine < 10) {
+                reader.nextLine()
                 continue
             }
 

@@ -23,7 +23,9 @@ class AuthorizationManager(
 
         require(userAuthorizationFile.isDirectory)
 
-        userAuthorizationFile.walk().filter { it.isFile }.map { objectMapperWithModules.read<AuthorizationInfo>(it) }
+        userAuthorizationFile.walk()
+            .filter { it.isFile }
+            .map { objectMapperWithModules.read<AuthorizationInfo>(it) }
             .forEach { authorizedUsers.add(it) }
 
         logger.info("Users info loaded")

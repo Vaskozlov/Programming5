@@ -3,6 +3,7 @@ package application
 import commands.client.*
 import commands.client.core.Command
 import database.DatabaseInterface
+import exceptions.KeyboardInterruptException
 import kotlinx.coroutines.*
 import lib.BufferedReaderWithQueueOfStreams
 import lib.Localization
@@ -61,10 +62,12 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
             )
         },
         DatabaseCommand.UPDATE to {
-            OrganizationBuilder.constructOrganization(
+            val org = OrganizationBuilder.constructOrganization(
                 bufferedReaderWithQueueOfStreams,
                 true
             )
+            org.id = it!!.toInt()
+            org
         },
         DatabaseCommand.REMOVE_ALL_BY_POSTAL_ADDRESS to {
             OrganizationBuilder.constructAddress(
@@ -99,8 +102,12 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
         running = true
 
         while (running) {
-            val line = bufferedReaderWithQueueOfStreams.readLine()
-            processCommand(line.trim())
+            try {
+                val line = bufferedReaderWithQueueOfStreams.readLine()
+                processCommand(line.trim())
+            } catch (error: KeyboardInterruptException) {
+                println(exceptionToMessage(error))
+            }
         }
     }
 

@@ -61,10 +61,17 @@ class DatabaseCommandsReceiver(
     )
 
     init {
-        commandArguments[DatabaseCommand.ADD_IF_MAX] = commandArguments[DatabaseCommand.ADD]!!
-        commandArguments[DatabaseCommand.UPDATE] = commandArguments[DatabaseCommand.ADD]!!
+        commandArguments[DatabaseCommand.ADD]?.let {
+            commandArguments[DatabaseCommand.ADD_IF_MAX] = it
+        }
 
-        commandArguments[DatabaseCommand.SHOW] = commandArguments[DatabaseCommand.READ]!!
+        commandArguments[DatabaseCommand.ADD]?.let {
+            commandArguments[DatabaseCommand.UPDATE] = it
+        }
+
+        commandArguments[DatabaseCommand.READ]?.let {
+            commandArguments[DatabaseCommand.SHOW] = it;
+        }
 
         val databaseDir = databaseStoragePath.toFile()
         databaseDir.mkdirs()
@@ -123,8 +130,8 @@ class DatabaseCommandsReceiver(
         }
 
         logger.trace("Executing command: $command , from $user")
-        val result =
-            execute(command, user, database, getArgumentForTheCommand(command, authorizationInfo, jsonHolder))
+        val commandArgument = getArgumentForTheCommand(command, authorizationInfo, jsonHolder)
+        val result = execute(command, user, database, commandArgument)
         sendResult(user, result!!)
     }
 

@@ -21,6 +21,11 @@ class CSVStreamLikeReader(data: String) {
     val elementLeftInLine: Int
         get() = data[lineIndex].size - column
 
+    fun nextLine() {
+        ++lineIndex
+        column = 0
+    }
+
     fun readElem(): String {
         val result = readNextElement(lineIndex, column)
 
@@ -28,6 +33,16 @@ class CSVStreamLikeReader(data: String) {
         column = result.column
 
         return result.elem
+    }
+
+    fun readNullableElem(): String? {
+        val elem = readElem()
+
+        if (elem == "null") {
+            return null
+        }
+
+        return elem
     }
 
     val next: String

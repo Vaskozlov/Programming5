@@ -6,14 +6,16 @@ object Server {
     @JvmStatic
     fun main(args: Array<String>) {
         val port = System.getenv("SERVER_PORT")?.toIntOrNull() ?: 8080
+        val clientsPath = System.getenv("CLIENTS_PATH")
+        val databasePath = System.getenv("DATABASE_PATH")
 
         val receiver = DatabaseCommandsReceiver(
             port,
             Dispatchers.Default,
-            Path("/tmp/ramdisk/tmp/clients"),
-            Path("/tmp/ramdisk/tmp/database")
+            Path(clientsPath),
+            Path(databasePath)
         )
-        receiver.run()
 
+        receiver.run()
     }
 }

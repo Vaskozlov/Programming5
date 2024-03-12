@@ -2,9 +2,7 @@ package database
 
 import exceptions.IllegalArgumentsForOrganizationException
 import lib.CSV.CSVStreamWriter
-import lib.PrettyStringBuilder
 import lib.WritableToCSVStream
-import lib.YamlConvertable
 import lib.collections.ImmutablePair
 import java.time.LocalDate
 
@@ -18,13 +16,15 @@ data class Organization(
     var employeesCount: Int?,
     var type: OrganizationType?,
     var postalAddress: Address?
-) : Comparable<Organization>, YamlConvertable, WritableToCSVStream {
+) : Comparable<Organization>, WritableToCSVStream {
     fun validate() {
         val validationResult = checkCorrectness()
 
         if (!validationResult.isValid) {
             throw IllegalArgumentsForOrganizationException(validationResult.reason)
         }
+
+        postalAddress?.validate()
     }
 
     fun fillNullFromAnotherOrganization(organization: Organization) {
@@ -39,24 +39,6 @@ data class Organization(
         postalAddress = fillAddressWithMissedInformation(postalAddress, organization.postalAddress)
     }
 
-    override fun constructYaml(builder: PrettyStringBuilder): PrettyStringBuilder {
-        builder.appendLine("- id: %d", id)
-        builder.increaseIdent()
-
-        builder.appendLine("name: %s", name)
-        coordinates!!.constructYaml(builder)
-        builder.appendLine("creationDate: %s", creationDate.toString())
-        builder.appendLine("annualTurnover: %s", annualTurnover)
-        builder.appendLine("fullName: %s", fullName)
-        builder.appendLine("employeesCount: %s", employeesCount)
-        builder.appendLine("type: %s", type)
-        postalAddress?.constructYaml(builder) ?: builder.appendLine("postalAddress: null")
-
-        builder.decreaseIdent()
-
-        return builder
-    }
-
     override fun writeToStream(stream: CSVStreamWriter) {
         stream.append(id)
         stream.append(name)
@@ -67,17 +49,20 @@ data class Organization(
 
         lib.writeNullableToStream<Int?>(
             stream,
-            employeesCount
+            employeesCount,
+            2
         ) { number -> stream.append(number) }
 
         lib.writeNullableToStream(
             stream,
-            type.toString()
+            type.toString(),
+            1
         ) { sequence -> stream.append(sequence) }
 
         lib.writeNullableToStream(
             stream,
-            postalAddress
+            postalAddress,
+            5
         ) { address: Address ->
             address.writeToStream(stream)
         }
@@ -88,13 +73,9 @@ data class Organization(
     }
 
     class ValidationResult {
-        var errorReason: String? = null
+        private var errorReason: String? = null
 
         constructor()
-
-        constructor(isValid: Boolean) {
-            errorReason = if (isValid) null else "false"
-        }
 
         constructor(errorReason: String?) {
             this.errorReason = errorReason
@@ -117,23 +98,23 @@ data class Organization(
         return fullName!!.compareTo(other.fullName!!)
     }
 
-    private fun checkCorrectness(): Organization.ValidationResult {
-        if (name!!.isEmpty()) {
-            return Organization.ValidationResult("Name must not be empty")
+    private fun checkCorrectness(): ValidationResult {
+        if (name.isNullOrEmpty()) {
+            return ValidationResult("Name must not be empty")
         }
 
         if (annualTurnover!! <= 0.0) {
-            return Organization.ValidationResult("Annual turnover must be above zero")
+            return ValidationResult("Annual turnover must be above zero")
         }
 
         if (fullName!!.length > 573) {
-            return Organization.ValidationResult("Full name too long, it's length must be within 573 symbols")
+            return ValidationResult("Full name too long, it's length must be within 573 symbols")
         }
 
         if (employeesCount != null && employeesCount!! < 0) {
-            return Organization.ValidationResult("Employees count must not be negative")
+            return ValidationResult("Employees count must not be negative")
         }
 
-        return Organization.ValidationResult()
+        return ValidationResult()
     }
 }
