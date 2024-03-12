@@ -1,10 +1,15 @@
 package lib
 
+import exceptions.RecursionReadErrorException
+import lib.collections.ImmutablePair
 import java.io.BufferedReader
 import java.io.FileReader
 import java.io.IOException
 import java.io.Reader
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.Path
+import kotlin.io.path.isSameFileAs
 
 /**
  * BufferedReader with an ability to push new stream which will be used instead of a previous one,
@@ -12,14 +17,14 @@ import java.util.*
  * readLine/popStream will throw IOException.
  */
 class BufferedReaderWithQueueOfStreams {
-    private val readers = ArrayDeque<BufferedReader>()
+    private val readers = ArrayDeque<ImmutablePair<BufferedReader, Path?>>()
     private var currentReader: BufferedReader
 
     constructor(filename: String) : this(FileReader(filename))
 
     constructor(input: Reader) {
-        readers.addLast(BufferedReader(input))
-        currentReader = readers.last
+        readers.addLast(ImmutablePair(BufferedReader(input), null))
+        currentReader = readers.last.first
     }
 
     /**
@@ -44,26 +49,33 @@ class BufferedReaderWithQueueOfStreams {
     }
 
     fun pushStream(filename: String) {
-        val file = FileReader(filename)
-        pushStream(file)
+        val path = Path(filename)
+        val streamWithTheSameFile =
+            readers.find { it.second != null && it.second.isSameFileAs(path) }
+
+        streamWithTheSameFile?.let {
+            throw RecursionReadErrorException()
+        }
+
+        pushStream(FileReader(filename), path)
     }
 
-    fun pushStream(input: Reader) {
-        readers.addLast(BufferedReader(input))
-        currentReader = readers.last
+    private fun pushStream(input: Reader, path: Path? = null) {
+        readers.addLast(ImmutablePair(BufferedReader(input), path))
+        currentReader = readers.last.first
     }
 
     /**
      * Removes last stream, if there are no streams left after popping IOException will be thrown.
      */
-    fun popStream() {
+    private fun popStream() {
         val removedReader = readers.removeLast()
-        removedReader.close()
+        removedReader.first.close()
 
         if (readers.isEmpty()) {
             throw IOException("No available streams left.")
         }
 
-        currentReader = readers.last
+        currentReader = readers.last.first
     }
 }

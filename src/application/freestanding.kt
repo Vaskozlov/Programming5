@@ -76,7 +76,7 @@ fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String =
             )
     }
 
-fun exceptionToMessage(exception: Throwable): String =
+fun exceptionToMessage(exception: Throwable?): String =
     when (exception) {
         is FileReadException -> String.format(
             "%s %s.",
@@ -120,6 +120,10 @@ fun exceptionToMessage(exception: Throwable): String =
 
         is InvalidOutputFormatException -> Localization.get(
             "message.show.unrecognizable_format"
+        )
+
+        is RecursionReadErrorException -> Localization.get(
+            "message.file.recursion"
         )
 
         else -> Localization.get("message.command.failed")

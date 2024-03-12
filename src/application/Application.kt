@@ -100,7 +100,7 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
 
     fun start() = runBlocking {
         localize()
-        printIntroductionMessage()
+        println(Localization.get("message.introduction"))
         running = true
 
         while (running) {
@@ -125,16 +125,22 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
         }
 
         val commandName = allArguments[0]
-        val argument = allArguments.getOrNull(1)
+        val commandArgument = allArguments.getOrNull(1)
         val databaseCommand = localNameToDatabaseCommand[commandName]
+        val argumentExecutor = argumentForCommand[databaseCommand]
 
-        if (databaseCommand == null) {
+        if (databaseCommand == null || argumentExecutor == null || !argumentForCommand.containsKey(databaseCommand)) {
             System.out.printf(Localization.get("message.command.not_found"), commandName)
             return
         }
 
-        val executionArgument = argumentForCommand[databaseCommand]!!.invoke(argument)
-        applicationScope.launch { executeCommand(databaseCommand, executionArgument) }
+        val executionArgument = argumentExecutor.invoke(commandArgument)
+
+        if (databaseCommand == DatabaseCommand.EXECUTE_SCRIPT) {
+            executeCommand(databaseCommand, executionArgument)
+        } else {
+            applicationScope.launch { executeCommand(databaseCommand, executionArgument) }
+        }
     }
 
     private suspend fun executeCommand(databaseCommand: DatabaseCommand, argument: Any?) {
@@ -145,19 +151,11 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
             val successMessage = commandSuccessMessage(databaseCommand, result.getOrNull())
             println(successMessage)
         } else {
-            val exception = result.exceptionOrNull()!!
+            val exception = result.exceptionOrNull()
             val errorMessage = exceptionToMessage(exception)
             println(errorMessage)
         }
 
-        addCommandToHistory(databaseCommand.name)
-    }
-
-    private fun addCommandToHistory(command: String) {
-        commandsHistory.add(command)
-    }
-
-    private fun printIntroductionMessage() {
-        println(Localization.get("message.introduction"))
+        commandsHistory.add(databaseCommand.name)
     }
 }

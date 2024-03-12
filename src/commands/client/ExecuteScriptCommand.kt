@@ -11,11 +11,10 @@ class ExecuteScriptCommand(application: Application) :
         val filename = argument as String
 
         return try {
-            val fileReader = FileReader(filename)
-            application.bufferedReaderWithQueueOfStreams.pushStream(fileReader)
+            application.bufferedReaderWithQueueOfStreams.pushStream(filename)
             Result.success(filename)
         } catch (e: Exception) {
-            Result.failure(FileReadException(filename));
+            Result.failure(e)
         }
     }
 }
