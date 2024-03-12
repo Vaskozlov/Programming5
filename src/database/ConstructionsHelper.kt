@@ -1,6 +1,7 @@
 package database
 
 import lib.CSV.CSVStreamLikeReader
+import lib.valueOrNull
 import java.time.LocalDate
 
 fun fillAddressWithMissedInformation(first: Address?, second: Address?): Address? {
@@ -32,14 +33,6 @@ fun addressFromStream(stream: CSVStreamLikeReader): Address {
     )
 }
 
-fun organizationTypeOrNull(value: String): OrganizationType? {
-    if (OrganizationType.entries.map { it.name }.contains(value)) {
-        return OrganizationType.valueOf(value)
-    }
-
-    return null
-}
-
 fun organizationFromStream(stream: CSVStreamLikeReader): Organization {
     return Organization(
         stream.readElem().toIntOrNull(),
@@ -49,7 +42,7 @@ fun organizationFromStream(stream: CSVStreamLikeReader): Organization {
         stream.readElem().toDoubleOrNull(),
         stream.readNullableElem(),
         stream.readElem().toIntOrNull(),
-        organizationTypeOrNull(stream.readElem()),
+        valueOrNull<OrganizationType>(stream.readElem()),
         addressFromStream(stream).simplify()
     )
 }

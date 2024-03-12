@@ -23,7 +23,8 @@ data class Location(val x: Double?, val y: Float?, val z: Long?, val name: Strin
         lib.writeNullableToStream(
             stream,
             name,
-            1
-        ) { sequence -> stream.append(sequence) }
+            1,
+            stream::append
+        )
     }
 }

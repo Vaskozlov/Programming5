@@ -26,8 +26,9 @@ class Address(val zipCode: String?, val town: Location?) : WritableToCSVStream {
         lib.writeNullableToStream(
             stream,
             zipCode,
-            1
-        ) { sequence -> stream.append(sequence) }
+            1,
+            stream::append
+        )
         town!!.writeToStream(stream)
     }
 }

@@ -12,8 +12,6 @@ interface DatabaseInterface {
 
     suspend fun add(organization: Organization)
 
-    suspend fun add(vararg newOrganizations: Organization)
-
     suspend fun addIfMax(newOrganization: Organization): ExecutionStatus
 
     suspend fun modifyOrganization(updatedOrganization: Organization)

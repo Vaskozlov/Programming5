@@ -1,11 +1,4 @@
 package exceptions
 
-class IllegalArgumentsForOrganizationException : IllegalArgumentException {
-    constructor() : super()
-
-    constructor(description: String) : super(description)
-
-    constructor(description: String, cause: Throwable) : super(description, cause)
-
-    constructor(cause: Throwable) : super(cause)
-}
+class IllegalArgumentsForOrganizationException(description: String = "", cause: Throwable? = null) :
+    IllegalArgumentException(description, cause) 

@@ -1,7 +1,6 @@
 package lib
 
 import lib.CSV.CSVStreamWriter
-import lib.functions.FunctionWithVoidReturnAndOneArgument
 
 /**
  * If object is null writes null to stream, otherwise calls the function
@@ -12,7 +11,7 @@ fun <T> writeNullableToStream(
     stream: CSVStreamWriter,
     value: T?,
     timesIfNull: Int,
-    function: FunctionWithVoidReturnAndOneArgument<T>
+    function: (T) -> Unit
 ) {
     if (value == null) {
         for (i in timesIfNull downTo 1) {

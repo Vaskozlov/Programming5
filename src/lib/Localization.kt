@@ -1,7 +1,6 @@
 package lib
 
 import exceptions.NoBundleLoadedException
-import java.io.IOException
 import java.util.*
 
 /**
@@ -14,7 +13,7 @@ object Localization {
      * @param key for string
      * @return gets string from bundle using key
      */
-    fun get(key: String?): String {
+    fun get(key: String): String {
         if (bundle == null) {
             throw NoBundleLoadedException("No bundle loaded")
         }
@@ -45,7 +44,7 @@ object Localization {
         }
     }
 
-    fun loadBundle(filename: String?, locale: String?) {
-        bundle = ResourceBundle.getBundle(filename, Locale(locale))
+    private fun loadBundle(filename: String, locale: String) {
+        bundle = ResourceBundle.getBundle(filename, Locale.of(locale))
     }
 }

@@ -47,25 +47,25 @@ data class Organization(
         stream.append(annualTurnover)
         stream.append(fullName)
 
-        lib.writeNullableToStream<Int?>(
+        lib.writeNullableToStream(
             stream,
             employeesCount,
-            2
-        ) { number -> stream.append(number) }
+            2,
+            stream::append
+        )
 
         lib.writeNullableToStream(
             stream,
             type.toString(),
-            1
-        ) { sequence -> stream.append(sequence) }
+            1,
+            stream::append
+        )
 
         lib.writeNullableToStream(
             stream,
             postalAddress,
-            5
-        ) { address: Address ->
-            address.writeToStream(stream)
-        }
+            5,
+        ) { it.writeToStream(stream) }
     }
 
     fun toPairOfFullNameAndType(): ImmutablePair<String?, OrganizationType?> {

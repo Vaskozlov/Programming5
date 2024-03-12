@@ -10,8 +10,7 @@ abstract class ServerWithAuthorization(
     context: CoroutineContext,
     commandFieldName: String,
     private val authorizationManager: AuthorizationManager
-) :
-    ServerWithCommands(port, context, commandFieldName) {
+) : ServerWithCommands(port, context, commandFieldName) {
 
     abstract suspend fun handleAuthorized(
         user: User,

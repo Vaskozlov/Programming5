@@ -1,7 +1,5 @@
 package lib.collections
 
-import lib.functions.FunctionWithVoidReturnAndOneArgument
-
 /**
  * Stores limited number of elements, when user attempts to add more overrides the oldest-added element
  */
@@ -30,7 +28,7 @@ class CircledStorage<T>(size: Int) {
         set(value, currentIndex++)
     }
 
-    fun applyFunctionOnAllElements(function: FunctionWithVoidReturnAndOneArgument<T>) {
+    fun applyFunctionOnAllElements(function: (T) -> Unit) {
         for (i in buffer.size downTo 1) {
             val elem: T? = get(currentIndex - i)
 

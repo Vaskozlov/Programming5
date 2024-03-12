@@ -64,10 +64,6 @@ class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispa
         sendCommandAndReceiveResult(DatabaseCommand.ADD, organization).onFailure { throw it }
     }
 
-    override suspend fun add(vararg newOrganizations: Organization) {
-        newOrganizations.forEach { add(it) }
-    }
-
     override suspend fun addIfMax(newOrganization: Organization): ExecutionStatus {
         val result = sendCommandAndReceiveResult(DatabaseCommand.ADD_IF_MAX, newOrganization)
         return ExecutionStatus.getByValue(result.isSuccess)
@@ -118,9 +114,9 @@ class RemoteDatabase(address: InetAddress, port: Int, dispatcher: CoroutineDispa
         return result.getOrNull() as String
     }
 
-    override suspend fun toYaml(): String = sendShowCommand("yaml")
+    override suspend fun toYaml() = sendShowCommand("yaml")
 
-    override suspend fun toJson(): String = sendShowCommand("json")
+    override suspend fun toJson() = sendShowCommand("json")
 
-    override suspend fun toCSV(): String = sendShowCommand("csv")
+    override suspend fun toCSV() = sendShowCommand("csv")
 }

@@ -23,10 +23,11 @@ class AuthorizationManager(
 
         require(userAuthorizationFile.isDirectory)
 
-        userAuthorizationFile.walk()
-            .filter { it.isFile }
+        userAuthorizationFile
+            .walk()
+            .filter { it.isFile } // shall I just write filter(File::isFile) instead?
             .map { objectMapperWithModules.read<AuthorizationInfo>(it) }
-            .forEach { authorizedUsers.add(it) }
+            .forEach(authorizedUsers::add)
 
         logger.info("Users info loaded")
     }
@@ -37,7 +38,9 @@ class AuthorizationManager(
 
     fun addUser(authorizationInfo: AuthorizationInfo) {
         authorizedUsers.add(authorizationInfo)
-        getAuthorizationFilePath(authorizationInfo).writeText(objectMapperWithModules.write(authorizationInfo))
+        getAuthorizationFilePath(authorizationInfo).writeText(
+            objectMapperWithModules.write(authorizationInfo)
+        )
     }
 
     fun removeUser(authorizationInfo: AuthorizationInfo) {

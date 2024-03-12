@@ -18,10 +18,4 @@ enum class DatabaseCommand {
     MAX_BY_FULL_NAME,
     EXECUTE_SCRIPT,
     HELP;
-
-    companion object
-    {
-        private val stringRepresentations: Set<String> = entries.map { it.name }.toHashSet()
-        fun containsKey(key: String): Boolean = stringRepresentations.contains(key)
-    }
 }

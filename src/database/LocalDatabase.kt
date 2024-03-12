@@ -4,21 +4,24 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import exceptions.OrganizationAlreadyPresentedException
 import exceptions.OrganizationNotFoundException
 import kotlinx.coroutines.*
-import lib.*
 import lib.CSV.CSVStreamLikeReader
 import lib.CSV.CSVStreamWriter
+import lib.ExecutionStatus
+import lib.IOHelper
+import lib.IdFactory
+import lib.Localization
 import lib.collections.ImmutablePair
 import lib.json.ObjectMapperWithModules
 import lib.json.prettyWrite
 import lib.json.write
-import java.io.*
+import java.io.FileWriter
+import java.io.IOException
+import java.io.StringWriter
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.stream.Collectors
-import kotlin.collections.HashSet
 import kotlin.io.path.absolutePathString
 import kotlin.math.max
 
@@ -49,19 +52,10 @@ class LocalDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatchers.IO
         organizations.maxByOrNull { it.fullName!! }
 
     override suspend fun getSumOfAnnualTurnover(): Double =
-        organizations.stream()
-            .collect(Collectors.summingDouble { organization -> organization.annualTurnover ?: 0.0 })
-
-
-    override suspend fun add(vararg newOrganizations: Organization) =
-        newOrganizations.forEach { add(it) }
-
+        organizations.sumOf { it.annualTurnover ?: 0.0 }
 
     override suspend fun add(organization: Organization) {
-        if (organization.id == null) {
-            organization.id = idFactory.nextId
-        }
-
+        organization.id = organization.id ?: idFactory.nextId
         organization.creationDate = LocalDate.now()
 
         if (isOrganizationAlreadyPresented(organization)) {
@@ -100,17 +94,16 @@ class LocalDatabase(path: Path, dispatcher: CoroutineDispatcher = Dispatchers.IO
     }
 
     override suspend fun removeAllByPostalAddress(address: Address) {
-        // shall I just use filter instead of streams().filter?
-        organizations.stream().filter { organization: Organization ->
-            organization.postalAddress == address
-        }.forEach { organization: Organization ->
-            organizations.remove(organization)
-            storedOrganizations.remove(organization.toPairOfFullNameAndType())
-        }
+        organizations
+            .filter { it.postalAddress == address }
+            .forEach {
+                organizations.remove(it)
+                storedOrganizations.remove(it.toPairOfFullNameAndType())
+            }
     }
 
     override suspend fun removeById(id: Int): ExecutionStatus {
-        val elementRemoved = organizations.removeIf { organization: Organization -> organization.id == id }
+        val elementRemoved = organizations.removeIf { it.id == id }
         return ExecutionStatus.getByValue(elementRemoved)
     }
 

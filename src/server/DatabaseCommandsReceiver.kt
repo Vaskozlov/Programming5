@@ -2,6 +2,7 @@ package server
 
 import com.fasterxml.jackson.databind.JsonNode
 import database.*
+import lib.containsKey
 import lib.json.read
 import lib.net.udp.JsonHolder
 import network.client.DatabaseCommand
@@ -95,6 +96,11 @@ class DatabaseCommandsReceiver(
         return commandArguments[command]?.invoke(authorizationInfo, jsonHolder)
     }
 
+    private fun getUserDatabase(authorizationInfo: AuthorizationInfo): DatabaseInterface =
+        usersDatabases.getOrPut(
+            authorizationInfo
+        ) { LocalDatabase(getUserDatabaseFile(authorizationInfo)) }
+
     private suspend fun sendResult(
         user: User,
         result: Result<Any?>
@@ -110,12 +116,9 @@ class DatabaseCommandsReceiver(
         jsonHolder: JsonHolder
     ) {
         val commandName = getCommandFromJson(jsonHolder)
-        val database: DatabaseInterface =
-            usersDatabases.getOrPut(
-                authorizationInfo
-            ) { LocalDatabase(getUserDatabaseFile(authorizationInfo)) }
+        val database = getUserDatabase(authorizationInfo)
 
-        if (!DatabaseCommand.containsKey(commandName)) {
+        if (!containsKey<DatabaseCommand>(commandName)) {
             send(user, NetworkCode.NOT_SUPPOERTED_COMMAND, null)
             return
         }

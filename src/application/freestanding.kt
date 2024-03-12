@@ -26,8 +26,8 @@ val commandNameToDatabaseCommand = mapOf(
     "command.sum_of_annual_turnover" to DatabaseCommand.SUM_OF_ANNUAL_TURNOVER
 )
 
-fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String {
-    return when (command) {
+fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String =
+    when (command) {
         DatabaseCommand.ADD, DatabaseCommand.ADD_IF_MAX ->
             Localization.get("message.collection.add.succeed")
 
@@ -75,10 +75,9 @@ fun commandSuccessMessage(command: DatabaseCommand, argument: Any?): String {
                 argument as Double?
             )
     }
-}
 
-fun exceptionToMessage(exception: Throwable): String {
-    return when (exception) {
+fun exceptionToMessage(exception: Throwable): String =
+    when (exception) {
         is FileReadException -> String.format(
             "%s %s.",
             Localization.get("message.collection.load.failed"),
@@ -119,11 +118,12 @@ fun exceptionToMessage(exception: Throwable): String {
             "message.network.error"
         )
 
+        is InvalidOutputFormatException -> Localization.get(
+            "message.show.unrecognizable_format"
+        )
+
         else -> Localization.get("message.command.failed")
     }
-}
 
-fun splitInputIntoArguments(input: String): Array<String>
-{
-    return input.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-}
+fun splitInputIntoArguments(input: String): Array<String> =
+    input.split(" +".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()

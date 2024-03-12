@@ -7,8 +7,6 @@ import server.AuthorizationInfo
 import java.net.InetAddress
 
 class CommandSender(address: InetAddress, port: Int) : Client(address, port) {
-    private var connected: Boolean = false
-
     init {
         setTimeout(10000)
     }

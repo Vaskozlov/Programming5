@@ -1,10 +1,12 @@
 package application
 
 import commands.client.*
-import commands.client.core.Command
 import database.DatabaseInterface
 import exceptions.KeyboardInterruptException
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import lib.BufferedReaderWithQueueOfStreams
 import lib.Localization
 import lib.collections.CircledStorage
@@ -21,7 +23,7 @@ class Application(val database: DatabaseInterface, dispatcher: CoroutineDispatch
     private var running = false
     private var localNameToDatabaseCommand: HashMap<String, DatabaseCommand> = HashMap()
 
-    private val databaseCommandToExecutor: Map<DatabaseCommand, Command> = mapOf(
+    private val databaseCommandToExecutor = mapOf(
         DatabaseCommand.HELP to HelpCommand(),
         DatabaseCommand.INFO to InfoCommand(database),
         DatabaseCommand.SHOW to ShowCommand(database),

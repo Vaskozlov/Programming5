@@ -11,19 +11,19 @@ object OrganizationBuilder {
 
         return Organization(
             null,
-            organizationBuilder.name,
-            organizationBuilder.coordinates,
+            organizationBuilder.getName(),
+            organizationBuilder.getCoordinates(),
             LocalDate.now(),
-            organizationBuilder.annualTurnover,
-            organizationBuilder.fullName,
-            organizationBuilder.employeesCount,
-            organizationBuilder.organizationType,
-            organizationBuilder.address
+            organizationBuilder.getAnnualTurnover(),
+            organizationBuilder.getFullName(),
+            organizationBuilder.getEmployeesCount(),
+            organizationBuilder.getOrganizationType(),
+            organizationBuilder.getAddress()
         )
     }
 
     fun constructAddress(reader: BufferedReaderWithQueueOfStreams, prototypedFromAnother: Boolean): Address? {
         val organizationBuilder = UserInteractiveOrganizationBuilder(reader, prototypedFromAnother)
-        return organizationBuilder.address
+        return organizationBuilder.getAddress()
     }
 }
